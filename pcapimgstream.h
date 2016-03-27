@@ -11,7 +11,7 @@ public:
     void Open(const char *name, const char *filter = NULL);
 
 private:
-    pcap_t *fp;
+    pcap_t *pcap;
     char errbuf[PCAP_ERRBUF_SIZE];
     struct bpf_program prg;
 };
