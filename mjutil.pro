@@ -15,11 +15,13 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     pcapimgstream.cpp \
-    tcpflow_map.cpp
+    tcpflow_map.cpp \
+    tcpflow.cpp
 
 HEADERS  += mainwindow.h \
     pcapimgstream.h \
-    tcpflow_map.h
+    tcpflow_map.h \
+    tcpflow.h
 
 FORMS    += mainwindow.ui
 
