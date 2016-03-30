@@ -42,7 +42,7 @@ public:
     int num_connections() { return map.size(); }
 
 private:
-    std::unordered_map<tcpflow_mapid,tcpflow> map;
+    std::unordered_map<tcpflow_mapid,tcpflow*> map;
 
 };
 
