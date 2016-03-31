@@ -10,7 +10,7 @@ class PcapImgStream
 public:
     PcapImgStream();
     ~PcapImgStream();
-    void Open(const char *name, const char *filter = NULL);
+    void Open(const char *name);
 
 private:
     tcpflow_map map;

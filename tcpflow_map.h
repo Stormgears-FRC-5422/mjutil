@@ -40,6 +40,7 @@ public:
     tcpflow_map();
     void process_packet(struct pcap_pkthdr &hdr, const u_char *data, int pcount);
     int num_connections() { return map.size(); }
+    void print_requests();
 
 private:
     std::unordered_map<tcpflow_mapid,tcpflow*> map;

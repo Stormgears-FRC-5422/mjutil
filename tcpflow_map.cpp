@@ -34,11 +34,16 @@ void tcpflow_map::process_packet(pcap_pkthdr &hdr, const u_char *data, int pcoun
     mapidr.srcport = ntohs(tcp->th_dport);
     mapidr.dstport = ntohs(tcp->th_sport);
 
+    // we're only interested in web traffic here
+    if (mapidf.srcport != 80 && mapidr.srcport != 80) return;
+
     std::unordered_map<tcpflow_mapid,tcpflow*>::iterator searchf, searchr;
     searchf = map.find(mapidf);
     searchr = map.find(mapidr);
 
     u_int32_t seq = ntohl(tcp->seq);
+    u_int32_t tcp_len = ntohs(ip->tot_len) - 4*ip->ihl - 4*tcp->doff;
+    char *tcp_pl = (char *)tcp + 4*tcp->doff;
 
     // is this a new connection? - forward case
     if ( 0 != (tcp->th_flags & TH_SYN) && 0 == (tcp->th_flags & TH_ACK)) {          // SYN
@@ -47,7 +52,7 @@ void tcpflow_map::process_packet(pcap_pkthdr &hdr, const u_char *data, int pcoun
             return;
         } else {
             tflow = new tcpflow();
-            tflow->seqf = tflow->seqf0 = seq;
+            tflow->seqf0 = seq;
             tflow->bf = true;
             map.emplace(mapidf,tflow);
         }
@@ -58,26 +63,36 @@ void tcpflow_map::process_packet(pcap_pkthdr &hdr, const u_char *data, int pcoun
             return;
         } else {
             tflow = map[mapidr];
-            tflow->seqr = tflow->seqr0 = seq;
+            tflow->seqr0 = seq;
             tflow->br = true;
         }
     }
 
-    if (searchf != map.end()) {
+    if (searchf != map.end() && tcp_len > 0) {
         tflow = map[mapidf];
-        if (seq > tflow->seqf) {
-            printf("%i: sending %i bytes\n", pcount, seq - tflow->seqf);
-            tflow->seqf = seq;
+        u_int32_t offset = seq - tflow->seqf0 - 1;
+        //printf("%i: sending data length %i at offset %i\n", pcount, tcp_len, offset);
+        if (offset + tcp_len > tflow->req.size()) { tflow->req.resize(offset + tcp_len); }
+        for (u_int32_t i=0; i<tcp_len; i++) { tflow->req[offset + i] = tcp_pl[i]; }
+        if (tflow->req.compare(0, 20, "GET /mjpg/video.mjpg") == 0) {
+            printf("DEBUG: request for video at packet %i\n", pcount);
         }
 
-    } else if (searchr != map.end()) {
+    } else if (searchr != map.end() && tcp_len > 0) {
         tflow = map[mapidr];
-        if (seq > tflow->seqr) {
-            printf("%i: receiving %i bytes\n", pcount, seq - tflow->seqr);
-            tflow->seqr = seq;
-        }
-
+        u_int32_t offset = seq - tflow->seqr0 - 1;
+        //printf("%i: receiving data length %i at offset %i\n", pcount, tcp_len, offset);
+        if (offset + tcp_len > tflow->rsp.size()) { tflow->rsp.resize(offset + tcp_len); }
+        for (u_int32_t i=0; i<tcp_len; i++) { tflow->rsp[offset + i] = tcp_pl[i]; }
     }
 
 
+}
+
+void tcpflow_map::print_requests() {
+    printf("Requests:\n");
+    for (std::unordered_map<tcpflow_mapid,tcpflow*>::iterator it = map.begin(); it != map.end(); it++) {
+        tcpflow *flow = it->second;
+        printf("%s\n--\n", flow->req.c_str());
+    }
 }

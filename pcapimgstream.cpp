@@ -11,7 +11,7 @@ PcapImgStream::~PcapImgStream() {
     }
 }
 
-void PcapImgStream::Open(const char *name, const char *filter) {
+void PcapImgStream::Open(const char *name) {
     int pcount = 0;
     struct pcap_pkthdr hdr;
     const u_char *data;
@@ -22,12 +22,6 @@ void PcapImgStream::Open(const char *name, const char *filter) {
         return;
     }
 
-    if (pcap_compile(pcap,&prg,filter,0,PCAP_NETMASK_UNKNOWN) < 0 ) {
-        fprintf(stderr,"Error compiling filter: %s\n", filter);
-    } else if (pcap_setfilter(pcap, &prg) < 0) {
-        fprintf(stderr, "Error setting filter: %s\n", errbuf);
-    }
-
     while ((data = pcap_next(pcap, &hdr)) != NULL) {
         pcount++;
         map.process_packet(hdr, data, pcount);
@@ -35,4 +29,6 @@ void PcapImgStream::Open(const char *name, const char *filter) {
 
     printf("%i packets in file\n", pcount);
     printf("%i connections\n", map.num_connections());
+
+    //map.print_requests();
 }

@@ -21,7 +21,7 @@ void MainWindow::GoFile(const char *name) {
 
 void MainWindow::HandleGoFile() {
     printf("Open this file: %s!\n", ui->fileEdit->text().toStdString().c_str());
-    pi.Open(ui->fileEdit->text().toStdString().c_str(), "tcp port 80");
+    pi.Open(ui->fileEdit->text().toStdString().c_str());
 }
 
 void MainWindow::HandleFileTool() {

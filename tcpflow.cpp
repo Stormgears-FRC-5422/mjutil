@@ -6,7 +6,7 @@ tcpflow::tcpflow()
 }
 
 void tcpflow::clear() {
-    seqf = seqf0 = seqr = seqr0 = 0;
+    seqf0 = seqr0 = 0;
     bf = br = false;
     req.clear();
     rsp.clear();

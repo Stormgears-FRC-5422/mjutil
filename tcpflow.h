@@ -1,6 +1,7 @@
 #ifndef TCPFLOW_H
 #define TCPFLOW_H
 
+#include <stdint.h>
 #include <string>
 
 class tcpflow
@@ -8,7 +9,7 @@ class tcpflow
 public:
     tcpflow();
     void clear();
-    u_int32_t seqf, seqf0, seqr, seqr0;
+    uint32_t seqf0, seqr0;
     bool bf, br;
     std::string req, rsp;
 };
