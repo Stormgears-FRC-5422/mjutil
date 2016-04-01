@@ -12,6 +12,17 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     QObject::connect(ui->buttonGo, SIGNAL(clicked()), this, SLOT(HandleGoFile()));
     QObject::connect(ui->fileTool, SIGNAL(clicked()), this, SLOT(HandleFileTool()));
+
+    // FIXME: for debugging purposes, hand pointer to label to pixmap
+    pi.DebugMe(ui->labelImage, ui->scrollImage, ui->spinFrame);
+
+    QObject::connect(ui->scrollImage, SIGNAL(valueChanged(int)), this, SLOT(HandleSlider(int)));
+    QObject::connect(ui->scrollImage, SIGNAL(valueChanged(int)), ui->spinFrame, SLOT(setValue(int)));
+    QObject::connect(ui->spinFrame, SIGNAL(valueChanged(int)), ui->scrollImage, SLOT(setValue(int)));
+}
+
+void MainWindow::HandleSlider(int v) {
+    pi.UpdateImage(v);
 }
 
 void MainWindow::GoFile(const char *name) {

@@ -21,6 +21,7 @@ public:
 public slots:
     void HandleGoFile();
     void HandleFileTool();
+    void HandleSlider(int);
 
 private:
     Ui::MainWindow *ui;
