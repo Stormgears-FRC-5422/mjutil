@@ -25,8 +25,11 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui
 
-unix:!macx: LIBS += -lpcap
+macx: INCLUDEPATH += /opt/local/include
+macx: LIBS += -L/opt/local/lib
+LIBS += -lpcap
 
-QMAKE_CXXFLAGS += -std=c++11
+#QMAKE_CXXFLAGS += -std=c++11
+CONFIG += c++11
 
 

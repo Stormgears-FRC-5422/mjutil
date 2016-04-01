@@ -10,7 +10,7 @@ tcpflow_map::tcpflow_map()
 
 void tcpflow_map::process_packet(pcap_pkthdr &hdr, const u_char *data, int pcount) {
     struct ether_header *eth;
-    struct iphdr *ip;
+    struct ip *ip;
     struct tcphdr *tcp;
 
     tcpflow_mapid mapidf, mapidr;
@@ -20,17 +20,17 @@ void tcpflow_map::process_packet(pcap_pkthdr &hdr, const u_char *data, int pcoun
     eth = (ether_header *) data;
 
     if (ntohs(eth->ether_type) != ETHERTYPE_IP) return;
-    ip = (struct iphdr *) (data + ETHER_HDR_LEN);
-    if (ip->version != 4 || ip->protocol != IPPROTO_TCP) return;
-    tcp = (struct tcphdr *) (data + ETHER_HDR_LEN + 4 * ip->ihl);
+    ip = (struct ip *) (data + ETHER_HDR_LEN);
+    if (ip->ip_v != 4 || ip->ip_p != IPPROTO_TCP) return;
+    tcp = (struct tcphdr *) (data + ETHER_HDR_LEN + 4 * ip->ip_hl);
 
-    mapidf.srcip = ntohl(ip->saddr);
-    mapidf.dstip = ntohl(ip->daddr);
+    mapidf.srcip = ntohl(ip->ip_src.s_addr);
+    mapidf.dstip = ntohl(ip->ip_dst.s_addr);
     mapidf.srcport = ntohs(tcp->th_sport);
     mapidf.dstport = ntohs(tcp->th_dport);
 
-    mapidr.srcip = ntohl(ip->daddr);
-    mapidr.dstip = ntohl(ip->saddr);
+    mapidr.srcip = ntohl(ip->ip_dst.s_addr);
+    mapidr.dstip = ntohl(ip->ip_src.s_addr);
     mapidr.srcport = ntohs(tcp->th_dport);
     mapidr.dstport = ntohs(tcp->th_sport);
 
@@ -41,9 +41,9 @@ void tcpflow_map::process_packet(pcap_pkthdr &hdr, const u_char *data, int pcoun
     searchf = map.find(mapidf);
     searchr = map.find(mapidr);
 
-    u_int32_t seq = ntohl(tcp->seq);
-    u_int32_t tcp_len = ntohs(ip->tot_len) - 4*ip->ihl - 4*tcp->doff;
-    char *tcp_pl = (char *)tcp + 4*tcp->doff;
+    u_int32_t seq = ntohl(tcp->th_seq);
+    u_int32_t tcp_len = ntohs(ip->ip_len) - 4*ip->ip_hl - 4*tcp->th_off;
+    char *tcp_pl = (char *)tcp + 4*tcp->th_off;
 
     // is this a new connection? - forward case
     if ( 0 != (tcp->th_flags & TH_SYN) && 0 == (tcp->th_flags & TH_ACK)) {          // SYN
@@ -95,4 +95,14 @@ void tcpflow_map::print_requests() {
         tcpflow *flow = it->second;
         printf("%s\n--\n", flow->req.c_str());
     }
+}
+
+tcpflow *tcpflow_map::find_flow(std::string s) {
+    for (std::unordered_map<tcpflow_mapid,tcpflow*>::iterator it = map.begin(); it != map.end(); it++) {
+        tcpflow *tflow = it->second;
+        if (tflow->req.compare(0, s.length(), s) == 0) {
+            return tflow;
+        }
+    }
+    return NULL;
 }

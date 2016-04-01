@@ -41,6 +41,7 @@ public:
     void process_packet(struct pcap_pkthdr &hdr, const u_char *data, int pcount);
     int num_connections() { return map.size(); }
     void print_requests();
+    tcpflow *find_flow(std::string);
 
 private:
     std::unordered_map<tcpflow_mapid,tcpflow*> map;
