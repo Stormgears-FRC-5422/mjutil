@@ -56,40 +56,57 @@ void PcapImgStream::Open(const char *name) {
     printf("*** response size is %i\n", tflow->rsp.length());
     printf("%s\n", tflow->rsp.substr(0,300).c_str());
 
-    size_t start_idx = 0;
+//    size_t start_idx = 0;
 
     int n_images = 0;
 
+    const char *rsp = tflow->rsp.c_str();
+    const char *p = rsp;
+    size_t rsp_length = tflow->rsp.length();
+
     while (1) {
 
-        if (start_idx >= tflow->rsp.length()) {
+//        if (start_idx >= tflow->rsp.length()) {
+        if ( (p - rsp) >= rsp_length) {
             printf("end of stream reached\n");
             break;
         }
 
-        size_t boundary_idx = tflow->rsp.substr(start_idx).find("--myboundary");
-        if (boundary_idx == std::string::npos) {
+//        size_t boundary_idx = tflow->rsp.substr(start_idx).find("--myboundary");
+//        if (boundary_idx == std::string::npos) {
+        if (NULL == (p = strfind(p,"--myboundary"))) {
             printf("ERROR: could not find MIME boundary\n");
             break;
         }
+//        printf("found boundary\n");
 
-        size_t idx = tflow->rsp.substr(start_idx).substr(boundary_idx).find("Content-Length: ");
-        if (idx == std::string::npos) {
+//        size_t idx = tflow->rsp.substr(start_idx).substr(boundary_idx).find("Content-Length: ");
+//        if (idx == std::string::npos) {
+        if (NULL == (p = strfind(p, "Content-Length: "))) {
             printf("ERROR: could not find content length\n");
             break;
         }
+//        printf("found content length\n");
 
-        size_t idx2 = tflow->rsp.substr(start_idx).substr(boundary_idx).substr(idx + 16).find("\r\n\r\n");
-        if (idx2 == std::string::npos) {
+        p += 16;
+        size_t content_length = atoi(p);
+//        printf("Content length is %i\n", content_length);
+
+//        size_t idx2 = tflow->rsp.substr(start_idx).substr(boundary_idx).substr(idx + 16).find("\r\n\r\n");
+//        if (idx2 == std::string::npos) {
+        if (NULL == (p = strfind(p,"\r\n\r\n"))) {
             printf("ERROR: could not find MIME return separator\n");
             break;
         }
+//        printf("found MIME separator\n");
 
-        size_t content_length = atoi(tflow->rsp.substr(start_idx).substr(boundary_idx).substr(idx + 16, idx2).c_str());
-        printf("DEBUG: %s\n", tflow->rsp.substr(start_idx).substr(boundary_idx).substr(idx + 16, idx2).c_str());
-        printf("content_length = %i\n", content_length);
+//        size_t content_length = atoi(tflow->rsp.substr(start_idx).substr(boundary_idx).substr(idx + 16, idx2).c_str());
+//        printf("DEBUG: %s\n", tflow->rsp.substr(start_idx).substr(boundary_idx).substr(idx + 16, idx2).c_str());
+//        printf("content_length = %i\n", content_length);
 
-        const char *jpg = tflow->rsp.c_str();
+        p += 4;
+        const uchar *jpg = (const uchar *)p;
+//        const char *jpg = tflow->rsp.c_str();
 #if 0
         int fd = open("/tmp/x.jpg", O_CREAT | O_WRONLY, 0644);
         if (fd < 0) {
@@ -101,29 +118,66 @@ void PcapImgStream::Open(const char *name) {
         close(fd);
 #endif
 
-        QPixmap p;
-        if (p.loadFromData((const uchar *)&jpg[start_idx + boundary_idx + idx + 16 + idx2 + 4], content_length)) {
-            printf("successfully loaded pixmap image\n");
-            images.push_back(p);
-            start_idx += (boundary_idx + idx + 16 + idx2 + 4 + content_length);
+#if 1
+        QPixmap px;
+//        if (px.loadFromData((const uchar *)&jpg[start_idx + boundary_idx + idx + 16 + idx2 + 4], content_length)) {
+        if (px.loadFromData(jpg, content_length)) {
+//            printf("successfully loaded pixmap image\n");
+            images.push_back(px);
+//            start_idx += (boundary_idx + idx + 16 + idx2 + 4 + content_length);
+            p += content_length;
             n_images++;
-            if (pixlabel != NULL) {
-                pixlabel->resize(p.size());
-                pixlabel->setPixmap(p);
-                pixlabel->update();
-            } else { printf("DEBUG: ERROR: pixlabel is null\n"); }
+            printf("read frame %i (%1.1f%% into stream)\n", n_images, (float)(p-rsp)/(float)rsp_length*100.);
+            if (n_images > 2000) { printf("*** Wow - lots of frames in this file. Stopping now. \n"); break; }
+//            if (pixlabel != NULL) {
+//                pixlabel->resize(px.size());
+//                pixlabel->setPixmap(px);
+//                pixlabel->update();
+//            } else { printf("DEBUG: ERROR: pixlabel is null\n"); }
         } else {
             printf("failed to load pixmap image\n");
             break;
         }
+#else
+        p += content_length;
+        n_images++;
+#endif
+
     }
 
     printf("read %i images from file\n", n_images);
-    scrollbar->setMinimum(0);
-    scrollbar->setMaximum(n_images-1);
-    scrollbar->setValue(0);
-    spinbox->setMinimum(0);
-    spinbox->setMaximum(n_images-1);
-    spinbox->setValue(0);
-    pixlabel->setPixmap(images[0]);
+    if (images.size() > 0 && pixlabel != NULL) {
+        pixlabel->resize(images[0].size());
+        pixlabel->setPixmap(images[0]);
+        pixlabel->update();
+        scrollbar->setMinimum(0);
+        scrollbar->setMaximum(n_images-1);
+        scrollbar->setValue(0);
+        spinbox->setMinimum(0);
+        spinbox->setMaximum(n_images-1);
+        spinbox->setValue(0);
+        pixlabel->setPixmap(images[0]);
+    } else {
+        scrollbar->setMinimum(0);
+        scrollbar->setMaximum(0);
+        scrollbar->setValue(0);
+    }
+}
+
+const char *PcapImgStream::strfind(const char *s, const char *match) {
+    const char *ret = NULL;
+    const char *p = s;
+    const char *m = match;
+
+    while ( (*p) != 0 ) {
+        if (*p == *m) {
+            if (m == match) { ret = p; }
+            p++; m++;
+            if (*m == 0) { return ret; }
+        } else {
+            m = match;
+            p++;
+        }
+    }
+    return NULL;
 }

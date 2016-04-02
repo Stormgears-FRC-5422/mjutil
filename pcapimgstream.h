@@ -23,6 +23,9 @@ public:
     }
     void UpdateImage(int);
 
+protected:
+    const char *strfind(const char *s, const char *match);
+
 private:
     tcpflow_map map;
     pcap_t *pcap;
