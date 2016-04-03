@@ -22,6 +22,7 @@ public:
         pixlabel = ql; scrollbar = sb; spinbox = spin;
     }
     void UpdateImage(int);
+    void GetFrame(int idx, const uchar *& data, int& length);
 
 protected:
     const char *strfind(const char *s, const char *match);

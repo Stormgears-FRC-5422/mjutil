@@ -4,6 +4,7 @@
 #include <QMainWindow>
 
 #include "pcapimgstream.h"
+#include "webserver.h"
 
 namespace Ui {
 class MainWindow;
@@ -26,6 +27,7 @@ public slots:
 private:
     Ui::MainWindow *ui;
     PcapImgStream pi;
+    WebServer *ws;
 };
 
 #endif // MAINWINDOW_H

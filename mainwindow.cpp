@@ -28,6 +28,9 @@ void MainWindow::HandleSlider(int v) {
 void MainWindow::GoFile(const char *name) {
     ui->fileEdit->setText(name);
     HandleGoFile();
+    ws = new WebServer(this, &pi);
+    QObject::connect(ui->scrollImage, SIGNAL(valueChanged(int)), ws, SLOT(updateFrame(int)));
+    QObject::connect(ui->spinFrame, SIGNAL(valueChanged(int)), ws, SLOT(updateFrame(int)));
 }
 
 void MainWindow::HandleGoFile() {
