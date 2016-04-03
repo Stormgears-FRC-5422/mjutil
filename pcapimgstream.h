@@ -15,6 +15,11 @@
 class PcapImgStream
 {
 public:
+    struct FrameInfo {
+        QPixmap image;
+        size_t streamOffset, contentLength;
+    };
+
     PcapImgStream();
     ~PcapImgStream();
     void Open(const char *name);
@@ -22,7 +27,7 @@ public:
         pixlabel = ql; scrollbar = sb; spinbox = spin;
     }
     void UpdateImage(int);
-    void GetFrame(int idx, const uchar *& data, int& length);
+    FrameInfo GetFrame(uint idx);
 
 protected:
     const char *strfind(const char *s, const char *match);
@@ -31,7 +36,10 @@ private:
     tcpflow_map map;
     pcap_t *pcap;
     char errbuf[PCAP_ERRBUF_SIZE];
-    std::vector<QPixmap> images;
+    const char *rsp;
+    size_t rsp_length;
+
+    std::vector<FrameInfo> frames;
 
     // for debugging
     QLabel *pixlabel;

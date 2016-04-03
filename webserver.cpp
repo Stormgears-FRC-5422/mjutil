@@ -27,6 +27,8 @@ void WebServer::readConnectionData() {
 }
 
 void WebServer::updateFrame(int fn) {
-    printf("webserver to update frame %i\n", fn);
+    PcapImgStream::FrameInfo frameInfo = pi->GetFrame(fn);
+    printf("webserver to update frame %i (offset %i, content length %i)\n",
+           fn, frameInfo.streamOffset, frameInfo.contentLength);
     qDebug("FIXME: updateFrame()");
 }

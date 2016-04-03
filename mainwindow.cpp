@@ -19,6 +19,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(ui->scrollImage, SIGNAL(valueChanged(int)), this, SLOT(HandleSlider(int)));
     QObject::connect(ui->scrollImage, SIGNAL(valueChanged(int)), ui->spinFrame, SLOT(setValue(int)));
     QObject::connect(ui->spinFrame, SIGNAL(valueChanged(int)), ui->scrollImage, SLOT(setValue(int)));
+
+    ws = new WebServer(this, &pi);
+    QObject::connect(ui->scrollImage, SIGNAL(valueChanged(int)), ws, SLOT(updateFrame(int)));
 }
 
 void MainWindow::HandleSlider(int v) {
@@ -28,9 +31,6 @@ void MainWindow::HandleSlider(int v) {
 void MainWindow::GoFile(const char *name) {
     ui->fileEdit->setText(name);
     HandleGoFile();
-    ws = new WebServer(this, &pi);
-    QObject::connect(ui->scrollImage, SIGNAL(valueChanged(int)), ws, SLOT(updateFrame(int)));
-    QObject::connect(ui->spinFrame, SIGNAL(valueChanged(int)), ws, SLOT(updateFrame(int)));
 }
 
 void MainWindow::HandleGoFile() {

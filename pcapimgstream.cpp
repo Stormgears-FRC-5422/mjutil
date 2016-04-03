@@ -19,8 +19,8 @@ PcapImgStream::~PcapImgStream() {
 
 void PcapImgStream::UpdateImage(int v) {
     if (v < 0) v = 0;
-    if (v > images.size()-1) v = images.size()-1;
-    pixlabel->setPixmap(images[v]);
+    if (v > frames.size()-1) v = frames.size()-1;
+    pixlabel->setPixmap(frames[v].image);
     pixlabel->update();
 }
 
@@ -60,9 +60,9 @@ void PcapImgStream::Open(const char *name) {
 
     int n_images = 0;
 
-    const char *rsp = tflow->rsp.c_str();
+    rsp = tflow->rsp.c_str();
     const char *p = rsp;
-    size_t rsp_length = tflow->rsp.length();
+    rsp_length = tflow->rsp.length();
 
     while (1) {
 
@@ -119,11 +119,14 @@ void PcapImgStream::Open(const char *name) {
 #endif
 
 #if 1
-        QPixmap px;
+//        QPixmap px;
+        FrameInfo frameInfo;
 //        if (px.loadFromData((const uchar *)&jpg[start_idx + boundary_idx + idx + 16 + idx2 + 4], content_length)) {
-        if (px.loadFromData(jpg, content_length)) {
+        if (frameInfo.image.loadFromData(jpg, content_length)) {
 //            printf("successfully loaded pixmap image\n");
-            images.push_back(px);
+            frameInfo.streamOffset = (size_t)jpg - (size_t)rsp;
+            frameInfo.contentLength = content_length;
+            frames.push_back(frameInfo);
 //            start_idx += (boundary_idx + idx + 16 + idx2 + 4 + content_length);
             p += content_length;
             n_images++;
@@ -146,9 +149,9 @@ void PcapImgStream::Open(const char *name) {
     }
 
     printf("read %i images from file\n", n_images);
-    if (images.size() > 0 && pixlabel != NULL) {
-        pixlabel->resize(images[0].size());
-        pixlabel->setPixmap(images[0]);
+    if (frames.size() > 0 && pixlabel != NULL) {
+        pixlabel->resize(frames[0].image.size());
+        pixlabel->setPixmap(frames[0].image);
         pixlabel->update();
         scrollbar->setMinimum(0);
         scrollbar->setMaximum(n_images-1);
@@ -156,7 +159,6 @@ void PcapImgStream::Open(const char *name) {
         spinbox->setMinimum(0);
         spinbox->setMaximum(n_images-1);
         spinbox->setValue(0);
-        pixlabel->setPixmap(images[0]);
     } else {
         scrollbar->setMinimum(0);
         scrollbar->setMaximum(0);
@@ -180,4 +182,9 @@ const char *PcapImgStream::strfind(const char *s, const char *match) {
         }
     }
     return NULL;
+}
+
+PcapImgStream::FrameInfo PcapImgStream::GetFrame(uint idx) {
+    if (idx > frames.size()-1) idx = frames.size()-1;
+    return frames[idx];
 }
