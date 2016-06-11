@@ -22,7 +22,7 @@ public:
 
     PcapImgStream();
     ~PcapImgStream();
-    void Open(const char *name);
+    void Open(const char *name, int nFrom = -1, int nTo = -1);
     void DebugMe(QLabel *ql, QScrollBar *sb, QSpinBox *spin) {
         pixlabel = ql; scrollbar = sb; spinbox = spin;
     }

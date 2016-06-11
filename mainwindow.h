@@ -16,11 +16,11 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = 0);
-    void GoFile(const char *name);
+    void GoFile(const char *name, int nFrom, int nTo);
     ~MainWindow();
 
 public slots:
-    void HandleGoFile();
+    void HandleGoFile(int nFrom, int nTo);
     void HandleFileTool();
     void HandleSlider(int);
 

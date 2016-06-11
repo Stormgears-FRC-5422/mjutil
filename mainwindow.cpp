@@ -28,14 +28,14 @@ void MainWindow::HandleSlider(int v) {
     pi.UpdateImage(v);
 }
 
-void MainWindow::GoFile(const char *name) {
+void MainWindow::GoFile(const char *name, int nFrom, int nTo) {
     ui->fileEdit->setText(name);
-    HandleGoFile();
+    HandleGoFile(nFrom, nTo);
 }
 
-void MainWindow::HandleGoFile() {
+void MainWindow::HandleGoFile(int nFrom, int nTo) {
     printf("Open this file: %s!\n", ui->fileEdit->text().toStdString().c_str());
-    pi.Open(ui->fileEdit->text().toStdString().c_str());
+    pi.Open(ui->fileEdit->text().toStdString().c_str(),nFrom,nTo);
 }
 
 void MainWindow::HandleFileTool() {

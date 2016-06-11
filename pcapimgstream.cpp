@@ -1,7 +1,7 @@
 #include "pcapimgstream.h"
 
 // for debugging
-//#include <fcntl.h>
+#include <fcntl.h>
 
 PcapImgStream::PcapImgStream()
 {
@@ -24,7 +24,7 @@ void PcapImgStream::UpdateImage(int v) {
     pixlabel->update();
 }
 
-void PcapImgStream::Open(const char *name) {
+void PcapImgStream::Open(const char *name, int nFrom, int nTo) {
     int pcount = 0;
     struct pcap_pkthdr hdr;
     const u_char *data;
@@ -78,6 +78,7 @@ void PcapImgStream::Open(const char *name) {
             printf("ERROR: could not find MIME boundary\n");
             break;
         }
+//        size_t boundary_idx = (size_t)(p-rsp);
 //        printf("found boundary\n");
 
 //        size_t idx = tflow->rsp.substr(start_idx).substr(boundary_idx).find("Content-Length: ");
@@ -107,17 +108,20 @@ void PcapImgStream::Open(const char *name) {
         p += 4;
         const uchar *jpg = (const uchar *)p;
 //        const char *jpg = tflow->rsp.c_str();
-#if 0
-        int fd = open("/tmp/x.jpg", O_CREAT | O_WRONLY, 0644);
-        if (fd < 0) {
-            printf("ERROR opening file\n");
-            return;
+        if (nFrom >= 0) {
+            if (nFrom <= n_images && n_images <= nTo) {
+                char fname[256];
+                snprintf(fname,sizeof(fname),"frame%04i.jpg",n_images);
+                int fd = open(fname, O_CREAT | O_WRONLY, 0644);
+                if (fd < 0) {
+                    printf("ERROR opening file\n");
+                    return;
+                }
+                int n = write(fd, jpg, content_length);
+                printf("wrote %i bytes to file\n", n);
+                close(fd);
+            }
         }
-        int n = write(fd, &jpg[boundary_idx + idx + 16 + idx2 + 4], content_length);
-        printf("wrote %i bytes to file\n", n);
-        close(fd);
-#endif
-
 #if 1
 //        QPixmap px;
         FrameInfo frameInfo;
@@ -131,7 +135,7 @@ void PcapImgStream::Open(const char *name) {
             p += content_length;
             n_images++;
             printf("read frame %i (%1.1f%% into stream)\n", n_images, (float)(p-rsp)/(float)rsp_length*100.);
-            if (n_images > 2000) { printf("*** Wow - lots of frames in this file. Stopping now. \n"); break; }
+            if (n_images > 10000) { printf("*** Wow - lots of frames in this file. Stopping now. \n"); break; }
 //            if (pixlabel != NULL) {
 //                pixlabel->resize(px.size());
 //                pixlabel->setPixmap(px);
