@@ -28,6 +28,8 @@ public:
     }
     void UpdateImage(int);
     FrameInfo GetFrame(uint idx);
+    const char *GetRsp() { return rsp; }
+    size_t GetRspLength() { return rsp_length; }
 
 protected:
     const char *strfind(const char *s, const char *match);

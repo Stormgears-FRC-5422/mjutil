@@ -23,9 +23,10 @@ public slots:
     void addConnection();
     void readConnectionData();
     void updateFrame(int);
-    void sendUpdatedFrame(QTcpSocket*);
 
 private:
+    void sendUpdatedFrame(QTcpSocket*);
+    void sendConnectionResponse(QTcpSocket*);
     QTcpServer *tcpServer;
     PcapImgStream *pi;
     std::vector<ClientInfo*> connections;
