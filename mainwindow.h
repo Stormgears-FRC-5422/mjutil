@@ -23,6 +23,7 @@ public slots:
     void HandleGoFile(int nFrom, int nTo);
     void HandleFileTool();
     void HandleSlider(int);
+    void HandlePlay();
 
 private:
     Ui::MainWindow *ui;

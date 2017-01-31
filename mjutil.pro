@@ -34,4 +34,7 @@ LIBS += -lpcap
 #QMAKE_CXXFLAGS += -std=c++11
 CONFIG += c++11
 
+RESOURCES += \
+    icons.qrc
+
 

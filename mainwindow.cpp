@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     QObject::connect(ui->buttonGo, SIGNAL(clicked()), this, SLOT(HandleGoFile()));
     QObject::connect(ui->fileTool, SIGNAL(clicked()), this, SLOT(HandleFileTool()));
+    QObject::connect(ui->buttonPlay, SIGNAL(clicked()), this, SLOT(HandlePlay()));
 
     // FIXME: for debugging purposes, hand pointer to label to pixmap
     pi.DebugMe(ui->labelImage, ui->scrollImage, ui->spinFrame);
@@ -22,10 +23,23 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ws = new WebServer(this, &pi);
     QObject::connect(ui->scrollImage, SIGNAL(valueChanged(int)), ws, SLOT(updateFrame(int)));
+
+    ui->buttonPlay->setIcon(QIcon(":/images/play.png"));
+    ui->buttonPlay->setText("Play");
 }
 
 void MainWindow::HandleSlider(int v) {
     pi.UpdateImage(v);
+}
+
+void MainWindow::HandlePlay() {
+    if(ui->buttonPlay->text() == "Play") {
+        ui->buttonPlay->setText("Pause");
+        ui->buttonPlay->setIcon(QIcon(":/images/pause.png"));
+    } else {
+        ui->buttonPlay->setText("Play");
+        ui->buttonPlay->setIcon(QIcon(":/images/play.png"));
+    }
 }
 
 void MainWindow::GoFile(const char *name, int nFrom, int nTo) {

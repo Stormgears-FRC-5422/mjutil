@@ -37,7 +37,7 @@
       <item>
        <widget class="QPushButton" name="buttonGo">
         <property name="text">
-         <string>Go</string>
+         <string>Load</string>
         </property>
        </widget>
       </item>
@@ -54,6 +54,23 @@
       </item>
       <item>
        <widget class="QSpinBox" name="spinFrame"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonPlay">
+        <property name="text">
+         <string>Play</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkLoop">
+        <property name="text">
+         <string>loop</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
