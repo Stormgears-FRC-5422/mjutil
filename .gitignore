@@ -1,5 +1,7 @@
 *.pro.user*
+*.so
+*.so.*
 Makefile
 mjutil
-
+mjmkindex
 
