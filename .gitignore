@@ -2,6 +2,6 @@
 *.so
 *.so.*
 Makefile
-mjutil
-mjmkindex
+app/mjutil
+mjmkindex/mjmkindex
 
