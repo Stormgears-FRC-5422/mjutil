@@ -18,10 +18,10 @@ public:
     bool Open(std::string fname, bool rdonly = true);
     bool OpenPcap(const char *fname);
     bool OpenPcap(std::string fname) { return OpenPcap(fname.c_str()); }
-    void ClosePcap() { if (pcap) pcap_close(pcap); }
+    void ClosePcap() { if (pcap) pcap_close(pcap); pcap = NULL; }
     bool OpenMji(const char *fname, bool rdonly = true);
     bool OpenMji(std::string fname, bool rdonly = true) { return OpenMji(fname.c_str(), rdonly); }
-    void CloseMji() { if (fd > 0) close(fd); }
+    void CloseMji() { if (fd > 0) close(fd); fd = -1; }
 
 private:
     int fd;

@@ -3,9 +3,10 @@
 #include <cstdint>
 #include <cstring>
 
+#include <arpa/inet.h>  // for ntohs, etc.
 #include <fcntl.h>
-
-#include <boost/filesystem/convenience.hpp>
+#include <net/ethernet.h>
+#include <netinet/ip.h>
 
 #include <QtDebug>
 
@@ -29,9 +30,13 @@ MjiFile::~MjiFile() {
 
 bool MjiFile::Open(std::string fname, bool rdonly) {
     bool ret;
+    std::string fname_root, pcapname, mjiname;
+    size_t lastdot = fname.find_last_of(".");
 
-    pcapname = boost::filesystem::change_extension(fname, "pcap").string();
-    mjiname = boost::filesystem::change_extension(fname, "mji").string();
+    fname_root = (lastdot == std::string::npos) ? fname : fname.substr(0, lastdot);
+
+    pcapname = fname_root + ".pcap";
+    mjiname = fname_root + ".mji";
 
     ret = OpenMji(mjiname, rdonly);
     if (!ret && rdonly) {
@@ -85,5 +90,21 @@ void MjiFile::WriteHeader() {
 }
 
 void MjiFile::ProcessPcap() {
-    qFatal("not implemented: %s at %d", __FILE__, __LINE__);
+    struct pcap_pkthdr hdr;
+    const uint8_t *data;
+    struct ether_header *eth;
+    struct ip *ip;
+    struct tcphdr *tcp;
+
+    while ((data = pcap_next(pcap, &hdr)) != NULL) {
+        if (hdr.caplen < 50) continue; // Need enough for eth, IP, TCP header
+        eth = (ether_header *) data;
+
+        if (ntohs(eth->ether_type) != ETHERTYPE_IP) continue;
+        ip = (struct ip *) (data + ETHER_HDR_LEN);
+        if (ip->ip_v != 4 || ip->ip_p != IPPROTO_TCP) continue;
+        tcp = (struct tcphdr *) (data + ETHER_HDR_LEN + 4 * ip->ip_hl);
+
+
+    }
 }
