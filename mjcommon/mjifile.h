@@ -36,6 +36,13 @@ private:
         uint16_t v_min;
     } header_t;
 
+    typedef struct {
+        int32_t stream_id;
+        int32_t length;
+        int64_t t_sec;
+        int32_t t_usec;
+    } tag_t;
+
     void ReadHeader();
     void WriteHeader();
     void ReadTag();
