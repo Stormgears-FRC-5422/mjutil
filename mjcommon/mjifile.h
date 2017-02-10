@@ -1,6 +1,7 @@
 #ifndef MJIFILE
 #define MJIFILE
 
+#include <vector>
 #include <string>
 
 #include <boost/functional/hash.hpp>
@@ -27,11 +28,14 @@ struct flow {
     static const int REQUESTED = 2;
     static const int GETFRAME = 3;
 
-    flow() { state = IDLE; }
+    flow() { state = IDLE; rsp_consumed = content_len = frames_written = 0; }
     uint32_t seqf0, seqr0;
     bool bf, br;
     std::string req, rsp;
-    int state;
+    std::size_t rsp_consumed, content_len;
+    int64_t t_sec;
+    int32_t t_usec;
+    int state, id, frames_written;
 };
 
 namespace std {
@@ -65,10 +69,9 @@ public:
     bool OpenMji(const char *fname, bool rdonly = true);
     bool OpenMji(std::string fname, bool rdonly = true) { return OpenMji(fname.c_str(), rdonly); }
     void CloseMji() { if (fd > 0) close(fd); fd = -1; }
-    std::size_t FindDoubleReturn(std::string& s);
 
 private:
-    int fd;
+    int fd, nStreams;
     pcap_t *pcap;
     char pcap_errbuf[PCAP_ERRBUF_SIZE];
     std::string pcapname, mjiname;
@@ -87,10 +90,18 @@ private:
         int32_t t_usec;
     } tag_t;
 
-    void ReadHeader();
+    typedef struct {
+        off_t loc, len;
+    } index_element_t;
+
+    std::vector< std::vector<index_element_t> > index;
+
+    std::size_t FindDoubleReturn(std::string& s);
+    bool ReadHeader();
+    bool ScanFile();
     void WriteHeader();
+    void WriteFrame(flow *f, const char *b, std::size_t n);
     void ReadTag();
-    void WriteTag();
     void ProcessPcap();
 
 };

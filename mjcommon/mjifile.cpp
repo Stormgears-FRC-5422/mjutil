@@ -10,6 +10,8 @@
 #include <fcntl.h>
 #include <net/ethernet.h>
 #include <netinet/ip.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <QtDebug>
 
@@ -24,6 +26,7 @@ const char *MjiFile::HDR_MAGIC = "MJI File";
 MjiFile::MjiFile() {
     fd = -1;
     pcap = NULL;
+    nStreams = 0;
 }
 
 MjiFile::~MjiFile() {
@@ -70,12 +73,52 @@ bool MjiFile::OpenMji(const char *fname, bool rdonly) {
     if (rdonly) {
         fd = open(fname, O_RDONLY);
         if (fd < 0) return false;
+        return (ReadHeader() && ScanFile());
     } else {
         fd = open(fname, O_WRONLY | O_CREAT, 0644);
         if (fd < 0) return false;
         WriteHeader();
     }
     return true;
+}
+
+bool MjiFile::ReadHeader() {
+    header_t hdr;
+    off_t n = read(fd, (char *)&hdr, sizeof(hdr));
+    if (n < sizeof(hdr)) {
+        qWarning("Premature end of file");
+        return false;
+    }
+    return (hdr.endian == MjiFile::ENDIAN_MAGIC);
+}
+
+bool MjiFile::ScanFile() {
+    tag_t tag;
+    int nFrames = 0;
+    bool ret = true;
+    index_element_t ie;
+
+    while (1) {
+        off_t n = read(fd, (char *)&tag, sizeof(tag));
+        if (n == 0) break;
+        if (n < sizeof(tag)) {
+            qWarning("Premature end of file");
+            return false;
+        }
+        if (tag.stream_id + 1> index.size()) {
+            index.resize(tag.stream_id + 1);
+        }
+        ie.loc = lseek(fd, 0, SEEK_CUR);
+        ie.len = tag.length;
+        index[tag.stream_id].push_back(ie);
+        if (0 > lseek(fd, tag.length, SEEK_CUR)) qWarning("seek error");
+        nFrames++;
+    }
+    std::cout << "MJI read summary:" << std::endl;
+    for (int i=0; i<index.size(); i++) {
+        std::cout << "Stream " << i << ": " << index[i].size() << " frames" << std::endl;
+    }
+    return ret;
 }
 
 void MjiFile::WriteHeader() {
@@ -105,6 +148,22 @@ std::size_t MjiFile::FindDoubleReturn(std::string& s) {
     return std::string::npos;
 }
 
+void MjiFile::WriteFrame(flow *f, const char *b, std::size_t n) {
+    tag_t tag;
+
+    tag.stream_id = f->id;
+    tag.length = n;
+    tag.t_sec = f->t_sec;
+    tag.t_usec = f->t_usec;
+
+    // FIXME: error checking
+    write(fd, (const char *)&tag, sizeof(tag));
+
+    if (n > write(fd, b, n)) {
+        qWarning("Incomplete write to file");
+    }
+}
+
 void MjiFile::ProcessPcap() {
     struct pcap_pkthdr hdr;
     const uint8_t *data;
@@ -116,7 +175,7 @@ void MjiFile::ProcessPcap() {
     std::unordered_map<flowid,flow*> map;
     std::unordered_map<flowid,flow*>::iterator searchf, searchr;
     int pcount = 0;
-    std::size_t str_loc;
+    std::size_t str_loc, tlen, consumed, content_len_loc;
 
     while ((data = pcap_next(pcap, &hdr)) != NULL) {
         pcount++;
@@ -194,8 +253,8 @@ void MjiFile::ProcessPcap() {
             tflow = map[idr];
             u_int32_t offset = seq - tflow->seqr0 - 1;
             //printf("%i: receiving data length %i at offset %i\n", pcount, tcp_len, offset);
-            if (offset + tcp_len > tflow->rsp.size()) { tflow->rsp.resize(offset + tcp_len); }
-            for (u_int32_t i=0; i<tcp_len; i++) { tflow->rsp[offset + i] = tcp_pl[i]; }
+            if (offset + tcp_len - tflow->rsp_consumed > tflow->rsp.size()) { tflow->rsp.resize(offset + tcp_len - tflow->rsp_consumed); }
+            for (u_int32_t i=0; i<tcp_len; i++) { tflow->rsp[offset + i - tflow->rsp_consumed] = tcp_pl[i]; }
         }
 
         /*
@@ -204,16 +263,17 @@ void MjiFile::ProcessPcap() {
         if (tflow) { // only decide on packets belonging to a flow we care about
             switch (tflow->state) {
             case flow::CONNECTED:
-                qInfo("DEBUG: req len: %i", tflow->req.length());
-                qInfo("DEBUG: request: %s", tflow->req.c_str());
-                qInfo("DEBUG: fwd src 0x%08x:%i dst 0x%08x:%i", idf.srcip, idf.srcport, idf.dstip, idf.dstport);
-                qInfo("DEBUG: rev src 0x%08x:%i dst 0x%08x:%i", idr.srcip, idr.srcport, idr.dstip, idr.dstport);
+                qWarning("DEBUG: req len: %i", tflow->req.length());
+                qWarning("DEBUG: request: %s", tflow->req.c_str());
+                qWarning("DEBUG: fwd src 0x%08x:%i dst 0x%08x:%i", idf.srcip, idf.srcport, idf.dstip, idf.dstport);
+                qWarning("DEBUG: rev src 0x%08x:%i dst 0x%08x:%i", idr.srcip, idr.srcport, idr.dstip, idr.dstport);
                 if (tflow->req.length() >= 20) {
                     if (tflow->req.compare(0, 20, "GET /mjpg/video.mjpg") == 0) {
-                        qInfo("request for video at packet %i", pcount);
+                        qWarning("request for video at packet %i", pcount);
+                        tflow->id = nStreams++;
                         tflow->state = flow::REQUESTED;
                     } else {
-                        qInfo("ditching request: %s", tflow->req.c_str());
+                        qWarning("ditching request: %s", tflow->req.c_str());
                         map.erase(idf);
                         map.erase(idr);
                         delete tflow;
@@ -223,20 +283,53 @@ void MjiFile::ProcessPcap() {
                 break;
             case flow::REQUESTED:
                 str_loc = FindDoubleReturn(tflow->rsp);
-                for (int i=0; i<tflow->rsp.length(); i++) {
-                    const char *p = tflow->rsp.c_str();
-                    printf("%i: %c %i\n", i, p[i] >= 32 ? p[i] : '.', p[i]);
-                }
-                std::cout << "Response:" << tflow->rsp << std::endl;
+//                for (std::size_t i=0; i<tflow->rsp.length(); i++) {
+//                    const char *p = tflow->rsp.c_str();
+//                    printf("%i: %c %i\n", i, p[i] >= 32 ? p[i] : '.', p[i]);
+//                }
+//                std::cout << "Response:" << tflow->rsp << std::endl;
                 if (str_loc == std::string::npos) continue;
-                if (std::string::npos != tflow->rsp.find("--myboundary")) std::cout << "found boundary" << std::endl;
-                tflow->rsp = tflow->rsp.substr(4+str_loc);
+                if (std::string::npos != tflow->rsp.find("--myboundary")) {
+                    //std::cout << "found boundary" << std::endl;
+                    content_len_loc = tflow->rsp.find("Content-Length:");
+                    if (content_len_loc == std::string::npos) continue;
+                    tflow->content_len = atoi(tflow->rsp.substr(15 + content_len_loc).c_str());
+                    //std::cout << "content length is " << tflow->content_len << std::endl;
+                    tflow->t_sec = hdr.ts.tv_sec;
+                    tflow->t_usec = hdr.ts.tv_usec;
+                    tflow->state = flow::GETFRAME;
+                }
+                consumed = str_loc + 4;
+                tlen = tflow->rsp.length() - consumed;
+                for (std::size_t i=0; i<tlen; i++) {
+                    tflow->rsp[i] = tflow->rsp[i+4+str_loc];
+                }
+                tflow->rsp.resize(tlen);
+                tflow->rsp_consumed += consumed;
                 break;
             case flow::GETFRAME:
+                if (tflow->rsp.length() >= tflow->content_len) {
+                    WriteFrame(tflow, tflow->rsp.c_str(), tflow->content_len);
+                    consumed = tflow->content_len;
+                    tlen = tflow->rsp.length() - consumed;
+                    for (std::size_t i=0; i<tlen; i++) {
+                        tflow->rsp[i] = tflow->rsp[consumed + i];
+                    }
+                    tflow->rsp.resize(tlen);
+                    tflow->rsp_consumed += consumed;
+                    tflow->frames_written++;
+                    tflow->state = flow::REQUESTED;
+                }
                 break;
             default:
                 qWarning("%s:%i: Unknown state: %i", __FILE__, __LINE__, tflow->state);
             }
         }
     }
+    std::cout << "Summary:" << std::endl;
+    for(std::unordered_map<flowid,flow*>::iterator it = map.begin();
+        it != map.end(); it++) {
+        std::cout << "Stream " << it->second->id << ": " << it->second->frames_written << std::endl;
+    }
+
 }
