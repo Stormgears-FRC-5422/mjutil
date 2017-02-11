@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 
-#include "pcapimgstream.h"
+#include "mjifile.h"
 #include "webserver.h"
 
 namespace Ui {
@@ -16,19 +16,22 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = 0);
-    void GoFile(const char *name, int nFrom, int nTo);
+    void GoFile(const char *name);
     ~MainWindow();
 
 public slots:
-    void HandleGoFile(int nFrom, int nTo);
+    void HandleGoFile();
     void HandleFileTool();
     void HandleSlider(int);
     void HandlePlay();
 
 private:
     Ui::MainWindow *ui;
-    PcapImgStream pi;
+    MjiFile mji;
     WebServer *ws;
+
+    char pixbuf[MjiFile::PIXBUF_SIZE];
+    QPixmap px;
 };
 
 #endif // MAINWINDOW_H

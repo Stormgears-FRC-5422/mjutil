@@ -3,13 +3,13 @@
 
 #include <QtNetwork>
 
-#include "pcapimgstream.h"
+#include "mjifile.h"
 
 class WebServer : public QObject
 {
     Q_OBJECT
 public:
-    explicit WebServer(QObject *parent = 0, PcapImgStream *p = 0);
+    explicit WebServer(QObject *parent = 0, MjiFile *m = 0);
 
     struct ClientInfo {
         ClientInfo() { madeRequest = false; }
@@ -28,7 +28,7 @@ private:
     void sendUpdatedFrame(QTcpSocket*);
     void sendConnectionResponse(QTcpSocket*);
     QTcpServer *tcpServer;
-    PcapImgStream *pi;
+    MjiFile *mji;
     std::vector<ClientInfo*> connections;
     int currentFrameNumber;
 

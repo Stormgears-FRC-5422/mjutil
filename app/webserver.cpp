@@ -1,6 +1,6 @@
 #include "webserver.h"
 
-WebServer::WebServer(QObject *parent, PcapImgStream *p) : QObject(parent), pi(p) {
+WebServer::WebServer(QObject *parent, MjiFile *m) : QObject(parent), mji(m) {
     tcpServer = new QTcpServer(this);
     if (!tcpServer->listen(QHostAddress::Any, 8080)) {
         qDebug("unable to open TCP listener");
@@ -41,18 +41,16 @@ void WebServer::sendConnectionResponse(QTcpSocket *connection) {
 }
 
 void WebServer::sendUpdatedFrame(QTcpSocket *connection) {
-    char data[265];
-    PcapImgStream::FrameInfo frameInfo = pi->GetFrame(currentFrameNumber);
-    printf("webserver to update frame %i (offset %i, content length %i)\n",
-           currentFrameNumber, frameInfo.streamOffset, frameInfo.contentLength);
-    int nData = snprintf(data, sizeof(data), "--myboundary\r\nContent-Type: image/jpeg\r\nContent-Length: %i\r\n\r\n", frameInfo.contentLength);
+    char data[256], pixbuf[MjiFile::PIXBUF_SIZE];
+    off_t len = MjiFile::PIXBUF_SIZE;
+    mji->GetFrame(0, currentFrameNumber, pixbuf, len);
+    printf("webserver to update frame %i (content length %i)\n",
+           currentFrameNumber, len);
+    int nData = snprintf(data, sizeof(data), "--myboundary\r\nContent-Type: image/jpeg\r\nContent-Length: %i\r\n\r\n", len);
     int n = connection->write(data, nData);
     if (n < nData) { qDebug("ERROR: sending frame: write to socket did not complete"); return; }
-    const char *rsp = pi->GetRsp();
-    size_t rsp_length = pi->GetRspLength();
-    if (frameInfo.streamOffset + frameInfo.contentLength >= rsp_length) { qDebug("ERROR: premature end of stream"); return; }
-    n = connection->write(&rsp[frameInfo.streamOffset], frameInfo.contentLength);
-    if (n < frameInfo.contentLength) { qDebug("ERROR: writing frame image: incomplete write to socket"); return; }
+    n = connection->write(pixbuf, len);
+    if (n < len) { qDebug("ERROR: writing frame image: incomplete write to socket"); return; }
 }
 
 void WebServer::updateFrame(int fn) {

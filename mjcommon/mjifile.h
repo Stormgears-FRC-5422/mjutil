@@ -12,6 +12,7 @@
 #include <pcap.h>
 #endif // ! _WIN32
 
+#include <sys/types.h>
 #include <unistd.h>
 
 #ifndef _WIN32
@@ -64,6 +65,7 @@ public:
     static const uint16_t V_MIN;
     static const uint16_t ENDIAN_MAGIC;
     static const char *HDR_MAGIC;
+    static const int PIXBUF_SIZE = 16384;
 
     MjiFile();
     ~MjiFile();
@@ -71,6 +73,8 @@ public:
     bool OpenMji(const char *fname, bool rdonly = true);
     bool OpenMji(std::string fname, bool rdonly = true) { return OpenMji(fname.c_str(), rdonly); }
     void CloseMji() { if (fd > 0) close(fd); fd = -1; }
+    bool GetFrame(int sid, int idx, char *buf, off_t& len);
+    int NumFrames(int sid) { return index[sid].size(); }
 #ifndef _WIN32
     bool OpenPcap(const char *fname);
     bool OpenPcap(std::string fname) { return OpenPcap(fname.c_str()); }

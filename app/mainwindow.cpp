@@ -1,6 +1,10 @@
 #include <stdio.h>
 
 #include <qfiledialog.h>
+#include <qpixmap.h>
+
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -15,13 +19,13 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(ui->buttonPlay, SIGNAL(clicked()), this, SLOT(HandlePlay()));
 
     // FIXME: for debugging purposes, hand pointer to label to pixmap
-    pi.DebugMe(ui->labelImage, ui->scrollImage, ui->spinFrame);
+    //pi.DebugMe(ui->labelImage, ui->scrollImage, ui->spinFrame);
 
     QObject::connect(ui->scrollImage, SIGNAL(valueChanged(int)), this, SLOT(HandleSlider(int)));
     QObject::connect(ui->scrollImage, SIGNAL(valueChanged(int)), ui->spinFrame, SLOT(setValue(int)));
     QObject::connect(ui->spinFrame, SIGNAL(valueChanged(int)), ui->scrollImage, SLOT(setValue(int)));
 
-    ws = new WebServer(this, &pi);
+    ws = new WebServer(this, &mji);
     QObject::connect(ui->scrollImage, SIGNAL(valueChanged(int)), ws, SLOT(updateFrame(int)));
 
     ui->buttonPlay->setIcon(QIcon(":/images/play.png"));
@@ -29,7 +33,12 @@ MainWindow::MainWindow(QWidget *parent) :
 }
 
 void MainWindow::HandleSlider(int v) {
-    pi.UpdateImage(v);
+    off_t len = MjiFile::PIXBUF_SIZE;
+    if (mji.GetFrame(0, v, pixbuf, len)) {
+        px.loadFromData((const uchar *)&pixbuf[0], len);
+        ui->labelImage->setPixmap(px);
+        ui->labelImage->update();
+    }
 }
 
 void MainWindow::HandlePlay() {
@@ -42,14 +51,22 @@ void MainWindow::HandlePlay() {
     }
 }
 
-void MainWindow::GoFile(const char *name, int nFrom, int nTo) {
+void MainWindow::GoFile(const char *name) {
     ui->fileEdit->setText(name);
-    HandleGoFile(nFrom, nTo);
+    HandleGoFile();
 }
 
-void MainWindow::HandleGoFile(int nFrom, int nTo) {
+void MainWindow::HandleGoFile() {
     printf("Open this file: %s!\n", ui->fileEdit->text().toStdString().c_str());
-    pi.Open(ui->fileEdit->text().toStdString().c_str(),nFrom,nTo);
+    mji.Open(ui->fileEdit->text().toStdString().c_str());
+    HandleSlider(0); // load first image and display in tool
+    int n_images = mji.NumFrames(0);
+    ui->scrollImage->setMinimum(0);
+    ui->scrollImage->setMaximum(n_images-1);
+    ui->scrollImage->setValue(0);
+    ui->spinFrame->setMinimum(0);
+    ui->spinFrame->setMaximum(n_images-1);
+    ui->spinFrame->setValue(0);
 }
 
 void MainWindow::HandleFileTool() {

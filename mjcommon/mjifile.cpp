@@ -143,6 +143,23 @@ std::size_t MjiFile::FindDoubleReturn(std::string& s) {
     return std::string::npos;
 }
 
+bool MjiFile::GetFrame(int sid, int idx, char *buf, off_t &len) {
+    index_element_t ie;
+
+    if (sid < 0) sid = 0; else if (sid > index.size()-1) sid = index.size()-1;
+    if (idx < 0) idx = 0; else if (idx > index[sid].size()-1) idx = index[sid].size()-1;
+    if (sid < index.size()) {
+        if (idx < index[sid].size()) {
+            ie = index[sid][idx];
+            if (ie.loc == lseek(fd, ie.loc, SEEK_SET)) {
+                len = read(fd, buf, (len < ie.len ? len : ie.len));
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 #ifndef _WIN32
 
 void MjiFile::WriteHeader() {
