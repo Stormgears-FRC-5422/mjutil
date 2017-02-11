@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QDateTime>
 #include <QMainWindow>
 
 #include "mjifile.h"
@@ -24,6 +25,7 @@ public slots:
     void HandleFileTool();
     void HandleSlider(int);
     void HandlePlay();
+    void TimerUpdate();
 
 private:
     Ui::MainWindow *ui;
@@ -32,6 +34,8 @@ private:
 
     char pixbuf[MjiFile::PIXBUF_SIZE];
     QPixmap px;
+    qint64 t0_real, t0_cap;
+    bool isPlaying;
 };
 
 #endif // MAINWINDOW_H

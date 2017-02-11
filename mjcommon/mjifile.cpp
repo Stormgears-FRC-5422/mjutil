@@ -119,6 +119,8 @@ bool MjiFile::ScanFile() {
         }
         ie.loc = lseek(fd, 0, SEEK_CUR);
         ie.len = tag.length;
+        ie.t_sec = tag.t_sec;
+        ie.t_usec = tag.t_usec;
         index[tag.stream_id].push_back(ie);
         if (0 > lseek(fd, tag.length, SEEK_CUR)) qWarning("seek error");
         nFrames++;
@@ -158,6 +160,11 @@ bool MjiFile::GetFrame(int sid, int idx, char *buf, off_t &len) {
         }
     }
     return false;
+}
+
+int64_t MjiFile::GetMSec(int sid, int idx) {
+    index_element_t ie = index[sid][idx];
+    return 1000 * ie.t_sec + ie.t_usec / 1000;
 }
 
 #ifndef _WIN32

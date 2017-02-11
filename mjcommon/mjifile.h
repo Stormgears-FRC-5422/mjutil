@@ -75,6 +75,7 @@ public:
     void CloseMji() { if (fd > 0) close(fd); fd = -1; }
     bool GetFrame(int sid, int idx, char *buf, off_t& len);
     int NumFrames(int sid) { return index[sid].size(); }
+    int64_t GetMSec(int sid, int idx);
 #ifndef _WIN32
     bool OpenPcap(const char *fname);
     bool OpenPcap(std::string fname) { return OpenPcap(fname.c_str()); }
@@ -106,6 +107,8 @@ private:
 
     typedef struct {
         off_t loc, len;
+        int64_t t_sec;
+        int32_t t_usec;
     } index_element_t;
 
     std::vector< std::vector<index_element_t> > index;
