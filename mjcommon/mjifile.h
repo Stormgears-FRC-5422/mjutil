@@ -4,13 +4,17 @@
 #include <vector>
 #include <string>
 
+#ifndef _WIN32
 #include <boost/functional/hash.hpp>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <pcap.h>
+#endif // ! _WIN32
+
 #include <unistd.h>
 
+#ifndef _WIN32
 struct flowid {
     in_addr_t srcip, dstip;
     u_int16_t srcport, dstport;
@@ -52,6 +56,7 @@ namespace std {
         }
     };
 }
+#endif // ! _WIN32
 
 class MjiFile {
 public:
@@ -63,18 +68,23 @@ public:
     MjiFile();
     ~MjiFile();
     bool Open(std::string fname, bool rdonly = true);
-    bool OpenPcap(const char *fname);
-    bool OpenPcap(std::string fname) { return OpenPcap(fname.c_str()); }
-    void ClosePcap() { if (pcap) pcap_close(pcap); pcap = NULL; }
     bool OpenMji(const char *fname, bool rdonly = true);
     bool OpenMji(std::string fname, bool rdonly = true) { return OpenMji(fname.c_str(), rdonly); }
     void CloseMji() { if (fd > 0) close(fd); fd = -1; }
+#ifndef _WIN32
+    bool OpenPcap(const char *fname);
+    bool OpenPcap(std::string fname) { return OpenPcap(fname.c_str()); }
+    void ClosePcap() { if (pcap) pcap_close(pcap); pcap = NULL; }
+#endif // ! _WIN32
 
 private:
     int fd, nStreams;
+    std::string mjiname;
+#ifndef _WIN32
     pcap_t *pcap;
     char pcap_errbuf[PCAP_ERRBUF_SIZE];
-    std::string pcapname, mjiname;
+    std::string pcapname;
+#endif // ! _WIN32
 
     typedef struct {
         char desc[16];
@@ -99,11 +109,12 @@ private:
     std::size_t FindDoubleReturn(std::string& s);
     bool ReadHeader();
     bool ScanFile();
+    void ReadTag();
+#ifndef _WIN32
     void WriteHeader();
     void WriteFrame(flow *f, const char *b, std::size_t n);
-    void ReadTag();
     void ProcessPcap();
-
+#endif // ! _WIN32
 };
 
 #endif // MJIFILE

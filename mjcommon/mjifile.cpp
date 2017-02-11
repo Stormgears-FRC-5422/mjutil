@@ -6,10 +6,13 @@
 #include <iostream>
 #include <unordered_map>
 
+#ifndef _WIN32
 #include <arpa/inet.h>  // for ntohs, etc.
-#include <fcntl.h>
 #include <net/ethernet.h>
 #include <netinet/ip.h>
+#endif // ! _WIN32
+
+#include <fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -25,13 +28,17 @@ const char *MjiFile::HDR_MAGIC = "MJI File";
 
 MjiFile::MjiFile() {
     fd = -1;
-    pcap = NULL;
     nStreams = 0;
+#ifndef _WIN32
+    pcap = NULL;
+#endif // ! _WIN32
 }
 
 MjiFile::~MjiFile() {
     if (fd > 0) close(fd);
+#ifndef _WIN32
     if (pcap) pcap_close(pcap);
+#endif // ! _WIN32
 }
 
 bool MjiFile::Open(std::string fname, bool rdonly) {
@@ -45,6 +52,7 @@ bool MjiFile::Open(std::string fname, bool rdonly) {
     mjiname = fname_root + ".mji";
 
     ret = OpenMji(mjiname, rdonly);
+#ifndef _WIN32
     if (!ret && rdonly) {
         if (OpenPcap(pcapname)) {
             if (OpenMji(mjiname, false)) {
@@ -61,12 +69,8 @@ bool MjiFile::Open(std::string fname, bool rdonly) {
             return false;
         }
     }
+#endif // ! _WIN32
     return ret;
-}
-
-bool MjiFile::OpenPcap(const char *fname) {
-    pcap = pcap_open_offline(fname, pcap_errbuf);
-    return (pcap != NULL);
 }
 
 bool MjiFile::OpenMji(const char *fname, bool rdonly) {
@@ -75,9 +79,14 @@ bool MjiFile::OpenMji(const char *fname, bool rdonly) {
         if (fd < 0) return false;
         return (ReadHeader() && ScanFile());
     } else {
+#ifdef _WIN32
+        qWarning("Windows implementation only opens MJI files as read only");
+        return false;
+#else // ! _WIN32
         fd = open(fname, O_WRONLY | O_CREAT, 0644);
         if (fd < 0) return false;
         WriteHeader();
+#endif // _WIN32
     }
     return true;
 }
@@ -121,6 +130,21 @@ bool MjiFile::ScanFile() {
     return ret;
 }
 
+std::size_t MjiFile::FindDoubleReturn(std::string& s) {
+    const char *match = "\r\n\r\n";
+    std::size_t len = s.length();
+    std::size_t matches = 0;
+    const char *p = s.c_str();
+    for (std::size_t i=0; i<len; i++) {
+        if (p[i] == match[matches]) matches++;
+        else matches = 0;
+        if (matches >= 4) return (i-3);
+    }
+    return std::string::npos;
+}
+
+#ifndef _WIN32
+
 void MjiFile::WriteHeader() {
     header_t hdr;
 
@@ -133,19 +157,6 @@ void MjiFile::WriteHeader() {
     if (sizeof(hdr) > write(fd, (char *)&hdr, sizeof(hdr))) {
         qWarning("writing to file %s: %s", pcapname.c_str(), strerror(errno));
     }
-}
-
-std::size_t MjiFile::FindDoubleReturn(std::string& s) {
-    const char *match = "\r\n\r\n";
-    std::size_t len = s.length();
-    std::size_t matches = 0;
-    const char *p = s.c_str();
-    for (std::size_t i=0; i<len; i++) {
-        if (p[i] == match[matches]) matches++;
-        else matches = 0;
-        if (matches >= 4) return (i-3);
-    }
-    return std::string::npos;
 }
 
 void MjiFile::WriteFrame(flow *f, const char *b, std::size_t n) {
@@ -333,3 +344,10 @@ void MjiFile::ProcessPcap() {
     }
 
 }
+
+bool MjiFile::OpenPcap(const char *fname) {
+    pcap = pcap_open_offline(fname, pcap_errbuf);
+    return (pcap != NULL);
+}
+
+#endif // ! _WIN32

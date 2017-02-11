@@ -14,3 +14,5 @@ HEADERS = pcapimgstream.h \
 
 CONFIG += c++11
 
+win32:SOURCES -= pcapimgstream.cpp tcpflow.cpp tcpflow_map.cpp
+win32:HEADERS -= pcapimgstream.h tcpflow.h tcpflow_map.h
