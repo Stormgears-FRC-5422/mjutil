@@ -46,11 +46,21 @@ void MainWindow::HandleSlider(int v) {
 void MainWindow::TimerUpdate() {
     if (isPlaying) {
         int val = ui->scrollImage->value() + 1;
+        if (val >= ui->scrollImage->maximum()) {
+            if (! ui->checkLoop->isChecked()) {
+                isPlaying = false;
+                ui->buttonPlay->setText("Play");
+                ui->buttonPlay->setIcon(QIcon(":/images/play.png"));
+                return;
+            }
+            val = ui->scrollImage->minimum();
+            t0_real = QDateTime::currentMSecsSinceEpoch();
+            t0_cap = mji.GetMSec(0, val);
+        }
         ui->scrollImage->setValue(val);
         qint64 now = QDateTime::currentMSecsSinceEpoch();
         qint64 next = mji.GetMSec(0, val+1);
         qint64 dt = (next - t0_cap) - (now - t0_real);
-        qWarning("scheduling delay of %i msec", dt);
         QTimer::singleShot(dt, this, SLOT(TimerUpdate()) );
     }
 }
@@ -60,12 +70,9 @@ void MainWindow::HandlePlay() {
         ui->buttonPlay->setText("Pause");
         ui->buttonPlay->setIcon(QIcon(":/images/pause.png"));
         t0_real = QDateTime::currentMSecsSinceEpoch();
-        qWarning("t0 real: %i", t0_real);
         t0_cap = mji.GetMSec(0, ui->scrollImage->value());
-        qWarning("t0 cap %i", t0_cap);
         qint64 next = mji.GetMSec(0, ui->scrollImage->value()+1);
         qint64 dt = (next - t0_cap);
-        qWarning("scheduling delay of %i msec", dt);
         QTimer::singleShot(dt, this, SLOT(TimerUpdate()));
         isPlaying = true;
     } else {
