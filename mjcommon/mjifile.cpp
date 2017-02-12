@@ -27,7 +27,6 @@ const uint16_t MjiFile::ENDIAN_MAGIC = 0x1234;
 const char *MjiFile::HDR_MAGIC = "MJI File";
 
 MjiFile::MjiFile() {
-    fd = -1;
     nStreams = 0;
 #ifndef _WIN32
     pcap = NULL;
@@ -35,7 +34,7 @@ MjiFile::MjiFile() {
 }
 
 MjiFile::~MjiFile() {
-    if (fd > 0) close(fd);
+    if (file.isOpen()) file.close();
 #ifndef _WIN32
     if (pcap) pcap_close(pcap);
 #endif // ! _WIN32
@@ -75,9 +74,10 @@ bool MjiFile::Open(std::string fname, bool rdonly) {
 
 bool MjiFile::OpenMji(const char *fname, bool rdonly) {
     if (rdonly) {
-        fd = open(fname, O_RDONLY);
-        if (fd < 0) return false;
-        return (ReadHeader() && ScanFile());
+        file.setFileName(fname);
+        if (file.open(QIODevice::ReadOnly)) {
+            return (ReadHeader() && ScanFile());
+        }
     } else {
 #ifdef _WIN32
         qWarning("Windows implementation only opens MJI files as read only");
@@ -93,7 +93,7 @@ bool MjiFile::OpenMji(const char *fname, bool rdonly) {
 
 bool MjiFile::ReadHeader() {
     header_t hdr;
-    off_t n = read(fd, (char *)&hdr, sizeof(hdr));
+    qint64 n = file.read((char *)&hdr, sizeof(hdr));
     if (n < sizeof(hdr)) {
         qWarning("Premature end of file");
         return false;
@@ -108,7 +108,7 @@ bool MjiFile::ScanFile() {
     index_element_t ie;
 
     while (1) {
-        off_t n = read(fd, (char *)&tag, sizeof(tag));
+        qint64 n = file.read((char *)&tag, sizeof(tag));
         if (n == 0) break;
         if (n < sizeof(tag)) {
             qWarning("Premature end of file");
@@ -117,12 +117,12 @@ bool MjiFile::ScanFile() {
         if (tag.stream_id + 1> index.size()) {
             index.resize(tag.stream_id + 1);
         }
-        ie.loc = lseek(fd, 0, SEEK_CUR);
+        ie.loc = file.pos();
         ie.len = tag.length;
         ie.t_sec = tag.t_sec;
         ie.t_usec = tag.t_usec;
         index[tag.stream_id].push_back(ie);
-        if (0 > lseek(fd, tag.length, SEEK_CUR)) qWarning("seek error");
+        if (! file.seek(ie.len + file.pos())) qWarning("seek error");
         nFrames++;
     }
     std::cout << "MJI read summary:" << std::endl;
@@ -153,8 +153,8 @@ bool MjiFile::GetFrame(int sid, int idx, char *buf, off_t &len) {
     if (sid < index.size()) {
         if (idx < index[sid].size()) {
             ie = index[sid][idx];
-            if (ie.loc == lseek(fd, ie.loc, SEEK_SET)) {
-                len = read(fd, buf, (len < ie.len ? len : ie.len));
+            if (file.seek(ie.loc)) {
+                len = file.read(buf, (len < ie.len ? len : ie.len));
                 return true;
             }
         }

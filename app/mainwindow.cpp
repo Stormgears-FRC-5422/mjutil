@@ -61,7 +61,7 @@ void MainWindow::TimerUpdate() {
         qint64 now = QDateTime::currentMSecsSinceEpoch();
         qint64 next = mji.GetMSec(0, val+1);
         qint64 dt = (next - t0_cap) - (now - t0_real);
-        QTimer::singleShot(dt, this, SLOT(TimerUpdate()) );
+        QTimer::singleShot(dt < 0 ? 0 : dt, this, SLOT(TimerUpdate()) );
     }
 }
 
@@ -73,7 +73,7 @@ void MainWindow::HandlePlay() {
         t0_cap = mji.GetMSec(0, ui->scrollImage->value());
         qint64 next = mji.GetMSec(0, ui->scrollImage->value()+1);
         qint64 dt = (next - t0_cap);
-        QTimer::singleShot(dt, this, SLOT(TimerUpdate()));
+        QTimer::singleShot(dt < 0 ? 0 : dt, this, SLOT(TimerUpdate()));
         isPlaying = true;
     } else {
         ui->buttonPlay->setText("Play");

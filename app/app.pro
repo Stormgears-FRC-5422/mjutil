@@ -25,7 +25,9 @@ macx: INCLUDEPATH += /opt/local/include
 macx: LIBS += -L/opt/local/lib
 DEPENDPATH += ../mjcommon
 INCLUDEPATH += ../mjcommon
+win32:LIBS += -L../mjcommon/debug
 LIBS += -L../mjcommon -lmjcommon -lpcap -lboost_filesystem
+win32:LIBS -= -lpcap -lboost_filesystem
 
 CONFIG += c++11
 

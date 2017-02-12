@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 
+#include <qfile.h>
+
 #ifndef _WIN32
 #include <boost/functional/hash.hpp>
 #include <netinet/in.h>
@@ -72,7 +74,7 @@ public:
     bool Open(std::string fname, bool rdonly = true);
     bool OpenMji(const char *fname, bool rdonly = true);
     bool OpenMji(std::string fname, bool rdonly = true) { return OpenMji(fname.c_str(), rdonly); }
-    void CloseMji() { if (fd > 0) close(fd); fd = -1; }
+    void CloseMji() { if (file.isOpen()) file.close(); }
     bool GetFrame(int sid, int idx, char *buf, off_t& len);
     int NumFrames(int sid) { return index[sid].size(); }
     int64_t GetMSec(int sid, int idx);
@@ -83,7 +85,8 @@ public:
 #endif // ! _WIN32
 
 private:
-    int fd, nStreams;
+    QFile file;
+    int nStreams;
     std::string mjiname;
 #ifndef _WIN32
     pcap_t *pcap;
@@ -106,7 +109,7 @@ private:
     } tag_t;
 
     typedef struct {
-        off_t loc, len;
+        qint64 loc, len;
         int64_t t_sec;
         int32_t t_usec;
     } index_element_t;
