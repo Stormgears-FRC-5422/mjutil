@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 
+#include "mjifile.h"  // for version information
+
 #include <QApplication>
 
 int main(int argc, char *argv[])
@@ -11,6 +13,7 @@ int main(int argc, char *argv[])
         w.GoFile(argv[1]);
     }
 
+    w.setWindowTitle(QString("Stormgears 5422 Motion JPEG Utility ") + MjiFile::VERSION);
     w.show();
 
     return a.exec();

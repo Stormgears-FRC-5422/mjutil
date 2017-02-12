@@ -101,7 +101,11 @@ void MainWindow::HandleGoFile() {
 }
 
 void MainWindow::HandleFileTool() {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open PCAP file"), ".", tr("PCAP files (*.pcap)"));
+#ifdef _WIN32
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open capture file"), ".", tr("Capture files (*.mji)"));
+#else
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open capture file"), ".", tr("Capture files (*.mji *.pcap)"));
+#endif
     ui->fileEdit->setText(fileName);
 }
 

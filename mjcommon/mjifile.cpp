@@ -20,11 +20,13 @@
 
 #include "mjifile.h"
 
+#include "version.h"
 
 const uint16_t MjiFile::V_MAJ = 1;
 const uint16_t MjiFile::V_MIN = 0;
 const uint16_t MjiFile::ENDIAN_MAGIC = 0x1234;
 const char *MjiFile::HDR_MAGIC = "MJI File";
+const char *MjiFile::VERSION = MJ_VERSION;
 
 MjiFile::MjiFile() {
     nStreams = 0;

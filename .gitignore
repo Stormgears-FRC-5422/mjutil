@@ -4,4 +4,7 @@
 Makefile
 app/mjutil
 mjmkindex/mjmkindex
-
+*/Makefile.Debug
+*/Makefile.Release
+mjcommon/version.h
+package/win/mjutil-installer.exe

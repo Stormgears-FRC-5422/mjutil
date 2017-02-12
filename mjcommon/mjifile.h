@@ -68,6 +68,7 @@ public:
     static const uint16_t ENDIAN_MAGIC;
     static const char *HDR_MAGIC;
     static const int PIXBUF_SIZE = 16384;
+    static const char *VERSION;
 
     MjiFile();
     ~MjiFile();
