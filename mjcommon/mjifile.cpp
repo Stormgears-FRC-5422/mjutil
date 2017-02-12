@@ -75,18 +75,17 @@ bool MjiFile::Open(std::string fname, bool rdonly) {
 }
 
 bool MjiFile::OpenMji(const char *fname, bool rdonly) {
+    file.setFileName(fname);
     if (rdonly) {
-        file.setFileName(fname);
         if (file.open(QIODevice::ReadOnly)) {
             return (ReadHeader() && ScanFile());
-        }
+        } else return false;
     } else {
 #ifdef _WIN32
         qWarning("Windows implementation only opens MJI files as read only");
         return false;
 #else // ! _WIN32
-        fd = open(fname, O_WRONLY | O_CREAT, 0644);
-        if (fd < 0) return false;
+        if (! file.open(QIODevice::WriteOnly)) return false;
         WriteHeader();
 #endif // _WIN32
     }
@@ -180,7 +179,7 @@ void MjiFile::WriteHeader() {
     hdr.v_maj = V_MAJ;
     hdr.v_min = V_MIN;
 
-    if (sizeof(hdr) > write(fd, (char *)&hdr, sizeof(hdr))) {
+    if (sizeof(hdr) > file.write((char *)&hdr, sizeof(hdr))) {
         qWarning("writing to file %s: %s", pcapname.c_str(), strerror(errno));
     }
 }
@@ -194,9 +193,9 @@ void MjiFile::WriteFrame(flow *f, const char *b, std::size_t n) {
     tag.t_usec = f->t_usec;
 
     // FIXME: error checking
-    write(fd, (const char *)&tag, sizeof(tag));
+    file.write((const char *)&tag, sizeof(tag));
 
-    if (n > write(fd, b, n)) {
+    if (n > file.write(b, n)) {
         qWarning("Incomplete write to file");
     }
 }

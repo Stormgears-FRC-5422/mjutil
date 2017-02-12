@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd $1
 VER=$(git describe)
 rm -f version.h
 cat > version.h << EOF
