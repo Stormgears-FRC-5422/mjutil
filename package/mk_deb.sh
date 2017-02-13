@@ -8,16 +8,16 @@ dist=$ID$VERSION_ID
 
 gitdescr=$(git describe)
 gitversion=$(cut -f1 -d';' <<< ${gitdescr/-/;})
-gitrelease=$(cut -f2 -d';' <<< ${gitdescr/-/;})
+if [ ${gitversion} == ${gitdescr} ]; then
+  gitrelease=1
+else
+  gitrelease=$(cut -f2 -d';' <<< ${gitdescr/-/;})
+fi
 gitrelease=${gitrelease/-/.}.$dist
 gitlog=$(git log -n 1 --oneline)
 gitname=$(git config --get user.name)
 gitemail=$(git config --get user.email)
 gitdate=$(date -R)
-
-if [ "x${gitrelease}" == "x" ]; then
-  gitrelease=1
-fi
 
 # copy source tree with version in directory name for deb build
 rm -rf $WD/../../${PKG}-*
