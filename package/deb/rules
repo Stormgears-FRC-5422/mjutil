@@ -23,7 +23,7 @@ include /usr/share/dpkg/default.mk
 
 override_dh_auto_configure:
 	qmake mjutil.pro
-	cp ../mjutil/mjcommon/version.h mjcommon/
+	./mjcommon/update_version.sh ./mjcommon
 
 override_dh_auto_install:
 	mkdir -p debian/mjutil/usr/bin
