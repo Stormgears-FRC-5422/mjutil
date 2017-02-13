@@ -1,8 +1,11 @@
 *.pro.user*
 *.so
 *.so.*
+*.dylib
 Makefile
 app/mjutil
+app/*.app
+app/*.dmg
 mjmkindex/mjmkindex
 */Makefile.Debug
 */Makefile.Release
