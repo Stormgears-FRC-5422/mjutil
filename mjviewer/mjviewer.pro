@@ -30,3 +30,6 @@ macx: INCLUDEPATH += /opt/local/include
 
 CONFIG += c++11
 
+ICON = images/mjview.icns
+
+RESOURCES += icons.qrc

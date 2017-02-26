@@ -34,6 +34,8 @@ macx: LIBS -= -lboost_filesystem
 
 CONFIG += c++11
 
+ICON = images/mjplay.icns
+
 RESOURCES += \
     icons.qrc
 
