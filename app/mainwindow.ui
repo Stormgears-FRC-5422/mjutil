@@ -34,13 +34,6 @@
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QPushButton" name="buttonGo">
-        <property name="text">
-         <string>Load</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </item>
     <item>
@@ -102,7 +95,7 @@
      <x>0</x>
      <y>0</y>
      <width>400</width>
-     <height>25</height>
+     <height>27</height>
     </rect>
    </property>
   </widget>
