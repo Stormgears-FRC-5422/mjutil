@@ -3,9 +3,12 @@
 *.so.*
 *.dylib
 Makefile
-app/mjutil
-app/*.app
-app/*.dmg
+mjplayer/mjplayer
+mjplayer/*.app
+mjplayer/*.dmg
+mjviewer/mjviewer
+mjviewer/*.app
+mjviewer/*.dmg
 mjmkindex/mjmkindex
 */Makefile.Debug
 */Makefile.Release
