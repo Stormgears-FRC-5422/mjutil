@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <QSettings>
 
+#include "configurationdialog.h"
+
 #include "mjifile.h"
 
 namespace Ui {
@@ -19,10 +21,12 @@ public:
     ~MainWindow();
 
 public slots:
+    void HandleConfigure();
 
 private:
     Ui::MainWindow *ui;
     QSettings *settings;
+    ConfigurationDialog *cfg;
 
     char pixbuf[MjiFile::PIXBUF_SIZE];
     QPixmap px;

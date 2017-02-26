@@ -34,6 +34,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     settings = new QSettings();
 
+    setWindowIcon(QIcon(":/images/icon.png"));
+
     ui->buttonPlay->setIcon(QIcon(":/images/play.png"));
     ui->buttonPlay->setText("Play");
     isPlaying = false;
