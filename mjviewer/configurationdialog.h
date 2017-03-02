@@ -23,6 +23,8 @@ public slots:
 private:
     Ui::Dialog *ui;
     QSettings *settings;
+
+    void RevertSettings();
 };
 
 #endif // CONFIGURATIONDIALOG_H

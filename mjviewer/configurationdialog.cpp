@@ -10,15 +10,25 @@ ConfigurationDialog::ConfigurationDialog(QSettings *s, QWidget *parent) :
 
     QObject::connect(this, SIGNAL(accepted()), this, SLOT(HandleAccepted()));
     QObject::connect(this, SIGNAL(rejected()), this, SLOT(HandleRejected()));
+
+    RevertSettings();
 }
 
 ConfigurationDialog::~ConfigurationDialog() {
 }
 
 void ConfigurationDialog::HandleAccepted() {
-    qDebug("accepted");
+    settings->setValue("viewer/cameraUrl", ui->lineUrl->text());
+    settings->setValue("viewer/networkTablesHost", ui->lineHost->text());
+    settings->setValue("viewer/networkTablesTopic",ui->lineTopic->text());
 }
 
 void ConfigurationDialog::HandleRejected() {
-    qDebug("rejected");
+    RevertSettings();
+}
+
+void ConfigurationDialog::RevertSettings() {
+    ui->lineUrl->setText(settings->value("viewer/cameraUrl","").toString());
+    ui->lineHost->setText(settings->value("viewer/networkTablesHost", "").toString());
+    ui->lineTopic->setText(settings->value("viewer/networkTablesTopic","").toString());
 }
