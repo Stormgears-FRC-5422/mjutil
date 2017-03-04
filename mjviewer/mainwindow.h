@@ -25,6 +25,9 @@ public slots:
     void HandleConfigure();
     void HandleConnect();
 
+private slots:
+    void HandleSocketRead();
+
 private:
     Ui::MainWindow *ui;
     QSettings *settings;
@@ -32,7 +35,7 @@ private:
 
     char pixbuf[MjiFile::PIXBUF_SIZE];
     QPixmap px;
-    QTcpSocket tcpSocket;
+    QTcpSocket *tcpSocket;
 };
 
 #endif // MAINWINDOW_H

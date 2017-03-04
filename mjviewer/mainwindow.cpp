@@ -19,6 +19,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(ui->buttonConfigure, SIGNAL(clicked()), this, SLOT(HandleConfigure()));
     QObject::connect(ui->buttonConnect, SIGNAL(clicked()), this, SLOT(HandleConnect()));
 
+    tcpSocket = new QTcpSocket();
+
+    QObject::connect(tcpSocket, SIGNAL(readyRead()), this, SLOT(HandleSocketRead()));
+
     setWindowIcon(QIcon(":/images/icon.png"));
 }
 
@@ -35,20 +39,29 @@ void MainWindow::HandleConnect() {
         QUrl url(urlStr);
         quint16 port = 80;
         if (! url.isValid()) {
-            qDebug("invalid url: %s", urlStr);
+            qDebug("invalid url: %s", urlStr.toStdString().c_str());
             return;
         }
         if (url.scheme() != "http") {
-            qDebug("invalid scheme: %s", url.scheme());
+            qDebug("invalid scheme: %s", url.scheme().toStdString().c_str());
             return;
         }
         if (url.port() > 0) { port = url.port(); }
-        QString host = url.host();
-        QString path = url.path();
+
+        QString request = "GET " + url.path() + " HTTP/1.1\r\nHost: " + url.host() +
+                "\r\nConnection: keep-alive\r\nCache-Control: max-age=0\r\nUpgrade-Insecure-Requests: 1\r\n\r\n";
+
+        tcpSocket->connectToHost(url.host(), port);
+        tcpSocket->write(request.toStdString().c_str(), request.length());
 
         ui->buttonConnect->setText("Disconnect");
     } else {
+        tcpSocket->disconnectFromHost();
 
         ui->buttonConnect->setText("Connect");
     }
+}
+
+void MainWindow::HandleSocketRead() {
+    qDebug("read socket data here");
 }
