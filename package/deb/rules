@@ -27,8 +27,11 @@ override_dh_auto_configure:
 
 override_dh_auto_install:
 	mkdir -p debian/mjutil/usr/bin
-	cp -f app/mjutil debian/mjutil/usr/bin
+	cp -f mjplayer/mjplayer debian/mjutil/usr/bin
+	cp -f mjviewer/mjviewer debian/mjutil/usr/bin
 	cp -f mjmkindex/mjmkindex debian/mjutil/usr/bin
+	cp -f mjframes/mjframes debian/mjutil/usr/bin
+	cp -f mjcut/mjcut debian/mjutil/usr/bin
 	mkdir -p debian/mjutil/usr/lib
 	cp -fd mjcommon/lib*.so* debian/mjutil/usr/lib
 

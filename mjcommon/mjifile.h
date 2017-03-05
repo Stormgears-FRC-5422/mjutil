@@ -62,6 +62,13 @@ namespace std {
 #endif // ! _WIN32
 
 class MjiFile {
+private:
+    typedef struct {
+        int32_t stream_id;
+        int32_t frame_start, frame_end;
+    } clip_spec_t;
+
+
 public:
     static const uint16_t V_MAJ;
     static const uint16_t V_MIN;
@@ -79,6 +86,7 @@ public:
     bool GetFrame(int sid, int idx, char *buf, off_t& len);
     int NumFrames(int sid) { return index[sid].size(); }
     int64_t GetMSec(int sid, int idx);
+    bool ParseClipSpec(std::string s, clip_spec_t& spec);
 #ifndef _WIN32
     bool OpenPcap(const char *fname);
     bool OpenPcap(std::string fname) { return OpenPcap(fname.c_str()); }

@@ -168,6 +168,36 @@ int64_t MjiFile::GetMSec(int sid, int idx) {
     return 1000 * ie.t_sec + ie.t_usec / 1000;
 }
 
+bool MjiFile::ParseClipSpec(std::string s, clip_spec_t &spec) {
+    int idx = s.find_first_of(":");
+    if (idx == std::string::npos) idx = 0;
+    else s = s.substr(idx);
+    spec.stream_id = idx;
+
+    idx = s.find_first_of("-");
+    if (idx == std::string::npos) {
+        spec.frame_start = spec.frame_end = -1;
+        return true;
+    }
+
+    if (idx == 0) {
+        spec.frame_start = -1;
+        s = s.substr(1);
+    } else {
+        spec.frame_start = atoi(s.substr(0,idx).c_str());
+        s = s.substr(idx+1);
+    }
+
+    if (s.length() == 0) {
+        spec.frame_end = -1;
+    } else {
+        spec.frame_end = atoi(s.c_str());
+    }
+
+    return true;
+
+}
+
 #ifndef _WIN32
 
 void MjiFile::WriteHeader() {
