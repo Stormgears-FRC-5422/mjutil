@@ -10,6 +10,8 @@ mjviewer/mjviewer
 mjviewer/*.app
 mjviewer/*.dmg
 mjmkindex/mjmkindex
+mjframes/mjframes
+mjcut/mjcut
 */Makefile.Debug
 */Makefile.Release
 mjcommon/version.h

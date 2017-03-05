@@ -34,6 +34,21 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QComboBox" name="comboSid">
+        <property name="currentText">
+         <string>0</string>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <item>
+         <property name="text">
+          <string>0</string>
+         </property>
+        </item>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>
@@ -95,7 +110,7 @@
      <x>0</x>
      <y>0</y>
      <width>400</width>
-     <height>27</height>
+     <height>25</height>
     </rect>
    </property>
   </widget>
