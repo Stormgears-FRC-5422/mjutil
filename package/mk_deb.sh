@@ -38,8 +38,8 @@ cp -r $WD/deb/*.ex $WD/deb/{compat,control,copyright,debhelper-build-stamp,docs,
 
 # update files to make deb build process with source files happy
 $WD/../mjcommon/update_version.sh $WD/../mjcommon
-tar -C $WD/../.. -czf $WD/../../${PKG}-${gitversion}.orig.tar.gz ${PKG}
+tar -C $WD/../.. -czf $WD/../../${PKG}_${gitversion}.orig.tar.gz ${PKG}
 
 cd $WD/../../${PKG}-${gitversion}
-dpkg-buildpackage -us -uc -b
+dpkg-buildpackage -S
 
