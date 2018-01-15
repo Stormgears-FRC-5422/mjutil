@@ -5,6 +5,8 @@ PKG=mjutil
 WD=$(dirname $0)
 . /etc/os-release
 dist=$ID$VERSION_ID
+codename=$VERSION_CODENAME
+[ -z "$codename" ] && codename=$(echo $VERSION | sed 's/.*(\(.*\)).*/\1/')
 
 gitdescr=$(git describe)
 gitversion=$(cut -f1 -d';' <<< ${gitdescr/-/;})
@@ -25,7 +27,7 @@ mkdir -p $WD/../../${PKG}-${gitversion}/debian
 rsync -aP $WD/../../${PKG}/ $WD/../../${PKG}-${gitversion}/
 
 cat > $WD/../../${PKG}-${gitversion}/debian/changelog <<EOF
-$PKG (${gitversion}-${gitrelease}) unstable; urgency=low
+$PKG (${gitversion}-${gitrelease}) $codename; urgency=low
 
   * ${gitlog}
 
@@ -33,6 +35,10 @@ $PKG (${gitversion}-${gitrelease}) unstable; urgency=low
 EOF
 
 cp -r $WD/deb/*.ex $WD/deb/{compat,control,copyright,debhelper-build-stamp,docs,rules,source} $WD/../../${PKG}-${gitversion}/debian
+
+# update files to make deb build process with source files happy
+$WD/../mjcommon/update_version.sh $WD/../mjcommon
+tar -C $WD/../.. -czf $WD/../../${PKG}-${gitversion}.orig.tar.gz ${PKG}
 
 cd $WD/../../${PKG}-${gitversion}
 dpkg-buildpackage -us -uc -b
