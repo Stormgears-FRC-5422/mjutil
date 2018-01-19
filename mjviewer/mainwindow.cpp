@@ -1,5 +1,7 @@
 #include <QUrl>
 
+#include "mjifile.h"
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -63,5 +65,12 @@ void MainWindow::HandleConnect() {
 }
 
 void MainWindow::HandleSocketRead() {
-    qDebug("read socket data here");
+    char buf[MjiFile::PIXBUF_SIZE];
+    int m, n;
+
+    n = tcpSocket->read(buf, sizeof(buf));
+    std::string s(buf);
+    if (s.find_first_of("--myboundary") != 0) qDebug("*** yo - missed boundary ***");
+    m = MjiFile::FindDoubleReturn(s);
+    qDebug("read %i bytes (%i): %s", n, m, s.substr(0,m).c_str());
 }

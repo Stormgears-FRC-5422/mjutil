@@ -85,6 +85,8 @@ public:
     int NumFrames(int sid) { return index[sid].size(); }
     int64_t GetMSec(int sid, int idx);
     bool ParseClipSpec(std::string s, std::vector<clip_spec_t>& clips);
+    static std::size_t FindDoubleReturn(std::string& s);
+
 #ifndef _WIN32
     bool OpenPcap(const char *fname);
     bool OpenPcap(std::string fname) { return OpenPcap(fname.c_str()); }
@@ -123,7 +125,6 @@ private:
 
     std::vector< std::vector<index_element_t> > index;
 
-    std::size_t FindDoubleReturn(std::string& s);
     bool ReadHeader();
     bool ScanFile();
     void ReadTag();
