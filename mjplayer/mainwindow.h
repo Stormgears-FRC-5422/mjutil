@@ -3,6 +3,7 @@
 
 #include <QDateTime>
 #include <QMainWindow>
+#include <QSettings>
 
 #include "mjifile.h"
 #include "webserver.h"
@@ -18,10 +19,10 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     void GoFile(const char *name);
+    void InitFromSettings(QString&);
     ~MainWindow();
 
 public slots:
-    void HandleGoFile();
     void HandleFileTool();
     void HandleSlider(int);
     void HandlePlay();
@@ -29,6 +30,7 @@ public slots:
 
 private:
     Ui::MainWindow *ui;
+    QSettings *settings;
     MjiFile mji;
     WebServer *ws;
 

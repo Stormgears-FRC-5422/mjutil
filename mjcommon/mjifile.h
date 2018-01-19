@@ -63,6 +63,11 @@ namespace std {
 
 class MjiFile {
 public:
+    typedef struct {
+        int32_t stream_id;
+        int32_t frame_start, frame_end;
+    } clip_spec_t;
+
     static const uint16_t V_MAJ;
     static const uint16_t V_MIN;
     static const uint16_t ENDIAN_MAGIC;
@@ -79,6 +84,9 @@ public:
     bool GetFrame(int sid, int idx, char *buf, off_t& len);
     int NumFrames(int sid) { return index[sid].size(); }
     int64_t GetMSec(int sid, int idx);
+    bool ParseClipSpec(std::string s, std::vector<clip_spec_t>& clips);
+    static std::size_t FindDoubleReturn(std::string& s);
+
 #ifndef _WIN32
     bool OpenPcap(const char *fname);
     bool OpenPcap(std::string fname) { return OpenPcap(fname.c_str()); }
@@ -117,7 +125,6 @@ private:
 
     std::vector< std::vector<index_element_t> > index;
 
-    std::size_t FindDoubleReturn(std::string& s);
     bool ReadHeader();
     bool ScanFile();
     void ReadTag();

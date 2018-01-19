@@ -15,7 +15,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    QObject::connect(ui->buttonGo, SIGNAL(clicked()), this, SLOT(HandleGoFile()));
     QObject::connect(ui->fileTool, SIGNAL(clicked()), this, SLOT(HandleFileTool()));
     QObject::connect(ui->buttonPlay, SIGNAL(clicked()), this, SLOT(HandlePlay()));
 
@@ -28,6 +27,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ws = new WebServer(this, &mji);
     QObject::connect(ui->scrollImage, SIGNAL(valueChanged(int)), ws, SLOT(updateFrame(int)));
+
+    QCoreApplication::setOrganizationName("Stormgears");
+    QCoreApplication::setOrganizationDomain("stormgears.org");
+    QCoreApplication::setApplicationName("mjutil");
+
+    settings = new QSettings();
+
+    setWindowIcon(QIcon(":/images/icon.png"));
 
     ui->buttonPlay->setIcon(QIcon(":/images/play.png"));
     ui->buttonPlay->setText("Play");
@@ -49,6 +56,7 @@ void MainWindow::TimerUpdate() {
         if (val >= ui->scrollImage->maximum()) {
             if (! ui->checkLoop->isChecked()) {
                 isPlaying = false;
+                settings->setValue("player/isPlaying",false);
                 ui->buttonPlay->setText("Play");
                 ui->buttonPlay->setIcon(QIcon(":/images/play.png"));
                 return;
@@ -75,21 +83,22 @@ void MainWindow::HandlePlay() {
         qint64 dt = (next - t0_cap);
         QTimer::singleShot(dt < 0 ? 0 : dt, this, SLOT(TimerUpdate()));
         isPlaying = true;
+        settings->setValue("player/isPlaying",true);
     } else {
         ui->buttonPlay->setText("Play");
         ui->buttonPlay->setIcon(QIcon(":/images/play.png"));
         isPlaying = false;
+        settings->setValue("player/isPlaying",false);
     }
 }
 
 void MainWindow::GoFile(const char *name) {
-    ui->fileEdit->setText(name);
-    HandleGoFile();
-}
-
-void MainWindow::HandleGoFile() {
-    printf("Open this file: %s!\n", ui->fileEdit->text().toStdString().c_str());
-    mji.Open(ui->fileEdit->text().toStdString().c_str());
+    printf("Open this file: %s!\n", name);
+    mji.Open(name);
+    ui->fileEdit->setText(name);    // set name after successfully opening file
+    settings->setValue("player/fileName",name);
+    isPlaying = false;
+    settings->setValue("player/isPlaying", false);
     HandleSlider(0); // load first image and display in tool
     int n_images = mji.NumFrames(0);
     ui->scrollImage->setMinimum(0);
@@ -106,7 +115,26 @@ void MainWindow::HandleFileTool() {
 #else
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open capture file"), ".", tr("Capture files (*.mji *.pcap)"));
 #endif
-    ui->fileEdit->setText(fileName);
+    if (! fileName.isNull()) {
+        GoFile(fileName.toStdString().c_str());
+    }
+}
+
+void MainWindow::InitFromSettings(QString& openFileName) {
+    if (! openFileName.isNull()) {
+        GoFile(openFileName.toStdString().c_str());
+    } else {
+        QString fileName = settings->value("player/fileName").toString();
+        if (! fileName.isNull()) {
+            bool p = settings->value("player/isPlaying", false).toBool();
+            qDebug("setting for playing: %i", p);
+            GoFile(fileName.toStdString().c_str());
+            if (p) {
+                ui->buttonPlay->setText("Play");
+                HandlePlay();
+            }
+        }
+    }
 }
 
 MainWindow::~MainWindow()

@@ -168,6 +168,53 @@ int64_t MjiFile::GetMSec(int sid, int idx) {
     return 1000 * ie.t_sec + ie.t_usec / 1000;
 }
 
+bool MjiFile::ParseClipSpec(std::string s, std::vector<clip_spec_t> &clips) {
+    clip_spec_t clip;
+
+    clips.clear();
+
+    std::string s_this, s_next = s;
+
+    while (! s_next.empty()) {
+        int idx = s_next.find_first_of(",");
+        if (idx == std::string::npos) {
+            s_this = s_next;
+            s_next = "";
+        } else {
+            s_this = s_next.substr(0,idx);
+            s_next = s_next.substr(idx+1);
+        }
+
+        idx = s_this.find_first_of(":");
+        if (idx == std::string::npos) {
+            clip.stream_id = 0;
+        } else {
+            clip.stream_id = atoi(s_this.substr(0,idx).c_str());
+            s_this = s_this.substr(idx);
+        }
+
+        idx = s_this.find_first_of("-");
+        if (idx == 0) {
+            clip.frame_start = 0;
+            if (s_this.length() == 1) {
+                //FIXME: check length of index vs stream_id
+                clip.frame_end = index[clip.stream_id].size();
+            } else {
+                clip.frame_end = atoi(s_this.substr(1+idx).c_str());
+            }
+        } else if (idx == std::string::npos) {
+            clip.frame_start = clip.frame_end = atoi(s_this.c_str());
+        } else {
+            clip.frame_start = atoi(s_this.substr(0,idx).c_str());
+            clip.frame_end = atoi(s_this.substr(1+idx).c_str());
+        }
+
+        clips.push_back(clip);
+    }
+
+    return true;
+}
+
 #ifndef _WIN32
 
 void MjiFile::WriteHeader() {

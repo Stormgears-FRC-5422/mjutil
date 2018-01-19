@@ -3,8 +3,8 @@ QT -= gui
 
 TEMPLATE = app
 
-TARGET = mjmkindex
-SOURCES = mjmkindex.cpp
+TARGET = mjcut
+SOURCES = mjcut.cpp
 HEADERS = 
 
 DEPENDPATH += ../mjcommon

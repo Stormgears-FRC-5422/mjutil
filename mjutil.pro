@@ -1,7 +1,10 @@
 TEMPLATE = subdirs
-SUBDIRS = mjcommon app mjmkindex
+SUBDIRS = mjcommon mjplayer mjviewer mjmkindex mjframes mjcut
 
-app.depends = mjcommon
+mjplayer.depends = mjcommon
 mjmkindex.depends = mjcommon
+mjviewer.depends = mjcommon
+mjframes.depends = mjcommon
+mjcut.depends = mjcommon
 
 

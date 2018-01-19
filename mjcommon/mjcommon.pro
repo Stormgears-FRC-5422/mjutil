@@ -14,6 +14,10 @@ HEADERS = pcapimgstream.h \
 
 CONFIG += c++11
 
+macx: INCLUDEPATH += /opt/local/include
+macx: LIBS += -L/opt/local/lib -lpcap -lboost_filesystem-mt
+macx: LIBS -= -lboost_filesystem
+
 win32:SOURCES -= pcapimgstream.cpp tcpflow.cpp tcpflow_map.cpp
 win32:HEADERS -= pcapimgstream.h tcpflow.h tcpflow_map.h
 
