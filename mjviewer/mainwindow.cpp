@@ -65,12 +65,23 @@ void MainWindow::HandleConnect() {
 }
 
 void MainWindow::HandleSocketRead() {
-    char buf[MjiFile::PIXBUF_SIZE];
-    int m, n;
+    char buf[MjiFile::PIXBUF_SIZE], *pxp;
+    int m, n, iBoundary, iContentLength, iEOL=0, contentLength;
 
     n = tcpSocket->read(buf, sizeof(buf));
     std::string s(buf);
-    if (s.find_first_of("--myboundary") != 0) qDebug("*** yo - missed boundary ***");
-    m = MjiFile::FindDoubleReturn(s);
-    qDebug("read %i bytes (%i): %s", n, m, s.substr(0,m).c_str());
+    iBoundary = s.find("--myboundary");
+    if (iBoundary >= 0) {
+        iContentLength = s.find("Content-Length: ", iBoundary);
+        if (iContentLength < 0) return;
+        iEOL = s.find("\r",iContentLength + 16);
+        if (iEOL < 0) return;
+        contentLength = atoi(s.substr(iContentLength + 16, iEOL - iContentLength - 16).c_str());
+        m = MjiFile::FindDoubleReturn(s);
+        if (m < 0 || n < 4 + m + contentLength) return;
+        pxp = &buf[m+4];
+        px.loadFromData((const uchar *)pxp,contentLength);
+        ui->labelImage->setPixmap(px);
+        ui->labelImage->update();
+    }
 }
