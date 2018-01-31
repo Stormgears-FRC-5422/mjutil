@@ -50,7 +50,9 @@ void MainWindow::HandleConnect() {
         }
         if (url.port() > 0) { port = url.port(); }
 
-        QString request = "GET " + url.path() + " HTTP/1.1\r\nHost: " + url.host() +
+	QString uri = url.path();
+	if (url.hasQuery()) { uri += "?"; uri += url.query(); }
+        QString request = "GET " + uri + " HTTP/1.1\r\nHost: " + url.host() +
                 "\r\nConnection: keep-alive\r\nCache-Control: max-age=0\r\nUpgrade-Insecure-Requests: 1\r\n\r\n";
 
         tcpSocket->connectToHost(url.host(), port);
@@ -71,12 +73,14 @@ void MainWindow::HandleSocketRead() {
     n = tcpSocket->read(buf, sizeof(buf));
     std::string s(buf);
     iBoundary = s.find("--myboundary");
+    qDebug("boundary");
     if (iBoundary >= 0) {
         iContentLength = s.find("Content-Length: ", iBoundary);
         if (iContentLength < 0) return;
         iEOL = s.find("\r",iContentLength + 16);
         if (iEOL < 0) return;
         contentLength = atoi(s.substr(iContentLength + 16, iEOL - iContentLength - 16).c_str());
+        qDebug("content length %i", contentLength);
         m = MjiFile::FindDoubleReturn(s);
         if (m < 0 || n < 4 + m + contentLength) return;
         pxp = &buf[m+4];
